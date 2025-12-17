@@ -24,7 +24,7 @@ class LocationSimulatorTest {
         }
 
         val tested = LocationSimulator(
-            tickerFlow = testFlow,
+            locationFlow = testFlow,
             onTick = { ticks.add(it) },
             backgroundScope = backgroundScope,
         )
@@ -74,7 +74,7 @@ class LocationSimulatorTest {
         }
 
         val tested = LocationSimulator(
-            tickerFlow = testFlow,
+            locationFlow = testFlow,
             onTick = { ticks.add(it) },
             backgroundScope = backgroundScope,
         )
@@ -109,7 +109,7 @@ class LocationSimulatorTest {
         }
 
         val tested = LocationSimulator(
-            tickerFlow = testFlow,
+            locationFlow = testFlow,
             onTick = {},
             backgroundScope = backgroundScope,
         )
@@ -126,7 +126,7 @@ class LocationSimulatorTest {
     @Test
     fun `stop when not started is safe`() = runTest {
         val tested = LocationSimulator(
-            tickerFlow = flow { emit(1) },
+            locationFlow = flow { emit(1) },
             onTick = {},
             backgroundScope = backgroundScope,
         )
@@ -148,7 +148,7 @@ class LocationSimulatorTest {
         }
 
         val tested = LocationSimulator(
-            tickerFlow = testFlow,
+            locationFlow = testFlow,
             onTick = { ticks.add(it) },
             backgroundScope = backgroundScope,
         )
@@ -184,7 +184,7 @@ class LocationSimulatorTest {
         }
 
         val tested = LocationSimulator(
-            tickerFlow = testFlow,
+            locationFlow = testFlow,
             onTick = {},
             backgroundScope = backgroundScope,
         )
@@ -229,7 +229,7 @@ class LocationSimulatorTest {
         }
 
         val tested = LocationSimulator(
-            tickerFlow = testFlow,
+            locationFlow = testFlow,
             onTick = {
                 println("Collected tick $it at time ${currentTime}")
                 ticks.add(it)

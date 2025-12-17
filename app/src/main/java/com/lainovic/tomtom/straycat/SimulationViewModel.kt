@@ -1,65 +1,89 @@
 package com.lainovic.tomtom.straycat
 
-import android.app.Application
-import android.content.Intent
 import android.util.Log
 import androidx.lifecycle.ViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 
 class SimulationViewModel(
-    private val application: Application,
+    private val service: LocationServiceFacade,
 ) : ViewModel() {
-    private val _state = MutableStateFlow<SimulationState>(SimulationState.Idle)
-    val state: StateFlow<SimulationState> = _state
+    val state: StateFlow<LocationServiceState>
+        = LocationServiceStateProvider.state
 
-    fun startStopSimulation() {
-        when (_state.value) {
-            SimulationState.Idle, SimulationState.Stopped -> startSimulation()
-            SimulationState.Running -> stopSimulation()
-            SimulationState.Paused -> stopSimulation()
+    val startStopButtonText: StateFlow<String> = state.map { currentState ->
+        when (currentState) {
+            LocationServiceState.Idle, LocationServiceState.Stopped -> "Start"
+            LocationServiceState.Running, LocationServiceState.Paused -> "Stop"
+            is LocationServiceState.Error -> "Retry"
         }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = "Start"
+    )
+
+    val pauseResumeButtonText: StateFlow<String> = state.map { currentState ->
+        when (currentState) {
+            LocationServiceState.Running -> "Pause"
+            LocationServiceState.Paused -> "Resume"
+            is LocationServiceState.Error -> "Error"
+            else -> "Pause/Resume"
+        }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = "Pause/Resume"
+    )
+
+    init {
+        Log.d(TAG.simpleName, "LocationPlayerViewModel created")
     }
 
-    fun pauseResumeSimulation() {
-        when (_state.value) {
-            SimulationState.Running -> pauseSimulation()
-            SimulationState.Paused -> resumeSimulation()
-            else -> { /* No-op */
-                Log.d(
-                    TAG.simpleName,
-                    "pauseResumeSimulation called in invalid state: ${_state.value}"
-                )
+    fun startStop() {
+        Log.d(TAG.simpleName, "startStop() called, current state: ${state.value}")
+        when (state.value) {
+            LocationServiceState.Idle,
+            LocationServiceState.Stopped,
+            is LocationServiceState.Error -> {
+                Log.d(TAG.simpleName, "Starting service")
+                service.start()
+            }
+            LocationServiceState.Running,
+            LocationServiceState.Paused -> {
+                Log.d(TAG.simpleName, "Stopping service")
+                service.stop()
             }
         }
+        Log.d(TAG.simpleName, "startStop() completed")
     }
 
-    private fun startSimulation() {
-        val intent = Intent(application, LocationSimulationService::class.java)
-            .setAction(LocationSimulationService.ACTION_START)
-        application.startForegroundService(intent)
-        _state.value = SimulationState.Running
+    fun pauseResume() {
+        Log.d(TAG.simpleName, "pauseResume() called, current state: ${state.value}")
+        when (state.value) {
+            LocationServiceState.Running -> {
+                Log.d(TAG.simpleName, "Pausing service")
+                service.pause()
+            }
+            LocationServiceState.Paused -> {
+                Log.d(TAG.simpleName, "Resuming service")
+                service.resume()
+            }
+            else -> {
+                Log.d(TAG.simpleName, "pauseResumeSimulation called in invalid state: ${state.value}")
+            }
+        }
+        Log.d(TAG.simpleName, "pauseResume() completed")
     }
 
-    private fun pauseSimulation() {
-        val intent = Intent(application, LocationSimulationService::class.java)
-            .setAction(LocationSimulationService.ACTION_PAUSE)
-        application.startForegroundService(intent)
-        _state.value = SimulationState.Paused
-    }
-
-    private fun resumeSimulation() {
-        val intent = Intent(application, LocationSimulationService::class.java)
-            .setAction(LocationSimulationService.ACTION_RESUME)
-        application.startForegroundService(intent)
-        _state.value = SimulationState.Running
-    }
-
-    private fun stopSimulation() {
-        val intent = Intent(application, LocationSimulationService::class.java)
-            .setAction(LocationSimulationService.ACTION_STOP)
-        application.startForegroundService(intent)
-        _state.value = SimulationState.Stopped
+    override fun onCleared() {
+        Log.d(TAG.simpleName, "onCleared() called")
+        super.onCleared()
+        // No cleanup needed - facade just observes singleton state
+        Log.d(TAG.simpleName, "onCleared() completed")
     }
 
     private companion object {

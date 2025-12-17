@@ -29,7 +29,7 @@
         </activity>
 
         <service
-            android:name=".LocationSimulationService"
+            android:name=".TickerLocationService"
             android:foregroundServiceType="location"
             android:exported="false" />
     </application>
