@@ -2,10 +2,9 @@ package com.lainovic.tomtom.straycat
 
 sealed interface SimulationState {
     object Idle : SimulationState
-    object Started : SimulationState
-    object Stopped : SimulationState
+    object Running : SimulationState
     object Paused : SimulationState
-    object Resumed : SimulationState
+    object Stopped : SimulationState
 }
 
 

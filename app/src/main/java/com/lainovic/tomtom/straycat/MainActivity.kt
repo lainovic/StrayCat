@@ -1,12 +1,12 @@
 package com.lainovic.tomtom.straycat
 
-import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -14,27 +14,22 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat.startForegroundService
-import androidx.lifecycle.lifecycleScope
 import com.lainovic.tomtom.straycat.ui.theme.StrayCatTheme
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 
 class MainActivity : ComponentActivity() {
-
-    val controller = SimulationController()
-
     private val locationPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { handlePermissions(it) }
+
+    private val viewModel: SimulationViewModel by viewModels {
+        SimulationViewModelFactory(application)
+    }
 
     private fun handlePermissions(permissions: Map<String, Boolean>) {
         val allGranted = permissions.all { it.value }
@@ -51,8 +46,6 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        observeSimulationState()
-
         setContent {
             StrayCatTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
@@ -62,24 +55,6 @@ class MainActivity : ComponentActivity() {
         }
 
         requestLocationPermissions()
-    }
-
-    private fun observeSimulationState() {
-        controller.state
-            .onEach {
-                when (it) {
-                    is SimulationState.Idle -> Toast.makeText(
-                        this,
-                        "Stray Cat simulation idle.",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                    is SimulationState.Started -> startSimulation()
-                    is SimulationState.Paused -> pauseSimulation()
-                    is SimulationState.Resumed -> resumeSimulation()
-                    is SimulationState.Stopped -> stopSimulation()
-                }
-            }
-            .launchIn(lifecycleScope)
     }
 
     private fun requestLocationPermissions() {
@@ -93,7 +68,7 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     fun MainScreen(modifier: Modifier = Modifier) {
-        var isSimulating by remember { mutableStateOf(false) }
+        val simulationState by viewModel.state.collectAsState()
 
         Box(
             modifier = modifier
@@ -102,44 +77,47 @@ class MainActivity : ComponentActivity() {
             contentAlignment = Alignment.BottomEnd,
         ) {
             Button(
-                onClick = {
-                    if (isSimulating) {
-                        controller.stop()
-                        isSimulating = false
-                    } else {
-                        controller.start()
-                        isSimulating = true
-                    }
-                }
+                onClick = { onStartStopClick() }
             ) {
-                Text(if (isSimulating) "Stop Simulation" else "Start Simulation")
+                Text(onStartStopClickText(simulationState))
             }
+        }
 
+        Box(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(24.dp),
+            contentAlignment = Alignment.BottomStart,
+        ) {
+            Button(
+                onClick = { onPauseResumeClick() }
+            ) {
+                Text(onPauseResumeClickText(simulationState))
+            }
         }
     }
 
-    fun startSimulation() {
-        val intent = Intent(this, LocationSimulationService::class.java)
-        intent.action = LocationSimulationService.ACTION_START
-        startForegroundService(this, intent)
+    private fun onStartStopClick() {
+        viewModel.startStopSimulation()
     }
 
-    fun stopSimulation() {
-        val intent = Intent(this, LocationSimulationService::class.java)
-        intent.action = LocationSimulationService.ACTION_STOP
-        startForegroundService(this, intent)
+    private fun onStartStopClickText(state: SimulationState): String {
+        return when (state) {
+            SimulationState.Idle, SimulationState.Stopped -> "Start"
+            SimulationState.Running, SimulationState.Paused -> "Stop"
+        }
     }
 
-    fun resumeSimulation() {
-        val intent = Intent(this, LocationSimulationService::class.java)
-        intent.action = LocationSimulationService.ACTION_RESUME
-        startForegroundService(this, intent)
+    private fun onPauseResumeClick() {
+        viewModel.pauseResumeSimulation()
     }
 
-    fun pauseSimulation() {
-        val intent = Intent(this, LocationSimulationService::class.java)
-        intent.action = LocationSimulationService.ACTION_PAUSE
-        startForegroundService(this, intent)
+    private fun onPauseResumeClickText(state: SimulationState): String {
+        return when (state) {
+            SimulationState.Running -> "Pause"
+            SimulationState.Paused -> "Resume"
+            else -> "Pause/Resume"
+        }
     }
 
     @Preview(showBackground = true)

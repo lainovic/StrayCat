@@ -59,7 +59,6 @@ class LocationSimulationService : Service() {
             ACTION_STOP -> {
                 Log.d(TAG.simpleName, "Stopping simulation")
                 simulator.stop()
-//                stopSelf()
             }
         }
 
