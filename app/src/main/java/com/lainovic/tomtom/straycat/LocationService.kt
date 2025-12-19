@@ -19,8 +19,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 
-abstract class LocationService<T> : Service() {
-    protected abstract fun createLocationFlow(): Flow<T>
+abstract class LocationService : Service() {
+    protected abstract fun observeLocations(): Flow<Location>
 
     protected val locationManager: LocationManager by lazy {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -39,7 +39,7 @@ abstract class LocationService<T> : Service() {
     private val simulator by lazy {
         Log.d(TAG.simpleName, "Creating LocationSimulator (lazy initialization)")
         LocationSimulator(
-            locationFlow = createLocationFlow(),
+            locationFlow = observeLocations(),
             onTick = this::onTick,
             onComplete = { Log.i(TAG.simpleName, "Simulation completed") },
             backgroundScope = CoroutineScope(
@@ -51,11 +51,9 @@ abstract class LocationService<T> : Service() {
         }
     }
 
-    private fun onTick(tick: T) {
+    private fun onTick(location: Location) {
         try {
-            Log.d(TAG.simpleName, "onTick() called with tick: $tick")
-            val location = tick as? Location
-                ?: throw IllegalArgumentException("Tick is not a Location: $tick")
+            Log.d(TAG.simpleName, "onTick() called with tick: $location")
             locationManager.setTestProviderLocation(LocationManager.GPS_PROVIDER, location)
         } catch (e: SecurityException) {
             Log.e(TAG.simpleName, "Failed to set mock location", e)

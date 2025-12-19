@@ -6,14 +6,15 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
-class TickerLocationService : LocationService<Location>() {
-    override fun createLocationFlow(): Flow<Location> {
+class TickerLocationService : LocationService() {
+    override fun observeLocations(): Flow<Location> {
         Log.d(TAG.simpleName, "createLocationFlow() called")
         return tickerFlow(1_000L).also {
             Log.d(TAG.simpleName, "tickerFlow created")
         }
     }
 
+    @Suppress("SameParameterValue")
     private fun tickerFlow(periodMs: Long) = flow {
         Log.d("TickerFlow", "tickerFlow started with periodMs=$periodMs")
         var tick = 0L

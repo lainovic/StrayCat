@@ -9,8 +9,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
 
-class MockLocationService : LocationService<Location>() {
-    override fun createLocationFlow(): Flow<Location> {
+class MockLocationService : LocationService() {
+    override fun observeLocations(): Flow<Location> {
         Log.d(TAG.simpleName, "createLocationFlow() called")
         return flow {
             Log.d(TAG.simpleName, "Start emitting locations...")
