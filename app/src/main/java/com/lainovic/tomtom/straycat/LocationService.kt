@@ -31,20 +31,19 @@ abstract class LocationService : Service() {
         }
     }
 
-    val handler = CoroutineExceptionHandler { _, t ->
-        Log.e(TAG.simpleName, "Exception caught in simulator", t)
-        broadcastState(LocationServiceState.Error(t.message ?: "Flow collection error"))
-    }
-
     private val simulator by lazy {
+        val handler = CoroutineExceptionHandler { _, throwable ->
+            Log.e(TAG.simpleName, "Exception caught in simulator", throwable)
+            broadcastState(LocationServiceState.Error(throwable.message ?: "Flow collection error"))
+        }
+
         Log.d(TAG.simpleName, "Creating LocationSimulator (lazy initialization)")
         LocationSimulator(
             locationFlow = observeLocations(),
             onTick = this::onTick,
             onComplete = { Log.i(TAG.simpleName, "Simulation completed") },
             backgroundScope = CoroutineScope(
-                Dispatchers.Default.limitedParallelism(1) +
-                        handler
+                Dispatchers.Default.limitedParallelism(1) + handler
             )
         ).also {
             Log.d(TAG.simpleName, "LocationSimulator created successfully")
@@ -237,7 +236,7 @@ abstract class LocationService : Service() {
     }
 
     companion object {
-        val TAG = this::class
+        val TAG = LocationService::class
         const val ACTION_START = "com.lainovic.tomtom.straycat.action.START"
         const val ACTION_STOP = "com.lainovic.tomtom.straycat.action.STOP"
         const val ACTION_PAUSE = "com.lainovic.tomtom.straycat.action.PAUSE"

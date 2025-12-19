@@ -33,6 +33,6 @@ class TickerLocationService : LocationService() {
     }
 
     companion object {
-        val TAG = this::class
+        val TAG = TickerLocationService::class
     }
 }

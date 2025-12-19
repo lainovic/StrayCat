@@ -44,6 +44,6 @@ class MockLocationService : LocationService() {
         (endInclusive - start) * Math.random() + start
 
     companion object {
-        val TAG = this::class
+        val TAG = MockLocationService::class
     }
 }
