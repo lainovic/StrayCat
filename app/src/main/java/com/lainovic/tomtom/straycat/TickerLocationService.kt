@@ -1,30 +1,37 @@
 package com.lainovic.tomtom.straycat
 
+import android.location.Location
 import android.util.Log
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
-class TickerLocationService : LocationService<Long>() {
-    override fun createLocationFlow(): Flow<Long> {
+class TickerLocationService : LocationService<Location>() {
+    override fun createLocationFlow(): Flow<Location> {
         Log.d(TAG.simpleName, "createLocationFlow() called")
         return tickerFlow(1_000L).also {
             Log.d(TAG.simpleName, "tickerFlow created")
         }
     }
 
-    companion object {
-        val TAG = TickerLocationService::class
+    private fun tickerFlow(periodMs: Long) = flow {
+        Log.d("TickerFlow", "tickerFlow started with periodMs=$periodMs")
+        var tick = 0L
+        while (true) {
+            Log.d("TickerFlow", "Emitting tick: $tick")
+            tick += 1
+            emit(Location("gps").apply {
+                latitude = tick.toDouble()
+                longitude = tick.toDouble()
+                accuracy = 5f
+                time = System.currentTimeMillis()
+                elapsedRealtimeNanos = System.nanoTime()
+            })
+            delay(periodMs)
+        }
     }
-}
 
-fun tickerFlow(periodMs: Long) = flow {
-    Log.d("TickerFlow", "tickerFlow started with periodMs=$periodMs")
-    var tick = 0L
-    while (true) {
-        Log.d("TickerFlow", "Emitting tick: $tick")
-        emit(tick++)
-        Log.d("TickerFlow", "Tick emitted, delaying for $periodMs ms")
-        delay(periodMs)
+    companion object {
+        val TAG = this::class
     }
 }

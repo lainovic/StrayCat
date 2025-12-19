@@ -2,24 +2,30 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission
+        android:name="android.permission.FOREGROUND_SERVICE"
+        tools:ignore="ForegroundServicesPolicy" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission
+        android:name="android.permission.ACCESS_MOCK_LOCATION"
+        tools:ignore="MockLocation,ProtectedPermissions" />
 
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
+        android:debuggable="true"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.StrayCat">
+        android:theme="@style/Theme.StrayCat"
+        tools:ignore="HardcodedDebugMode">
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:label="@string/app_name"
             android:theme="@style/Theme.StrayCat">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -30,8 +36,13 @@
 
         <service
             android:name=".TickerLocationService"
-            android:foregroundServiceType="location"
-            android:exported="false" />
+            android:exported="false"
+            android:foregroundServiceType="location" />
+
+        <service
+            android:name=".MockLocationService"
+            android:exported="false"
+            android:foregroundServiceType="location" />
     </application>
 
 </manifest>

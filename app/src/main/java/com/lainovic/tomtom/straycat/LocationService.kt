@@ -1,10 +1,17 @@
 package com.lainovic.tomtom.straycat
 
+import android.annotation.SuppressLint
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
 import android.content.Intent
+import android.content.pm.ServiceInfo
+import android.location.Criteria
+import android.location.Location
+import android.location.LocationManager
+import android.location.provider.ProviderProperties
+import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -15,6 +22,15 @@ import kotlinx.coroutines.flow.Flow
 abstract class LocationService<T> : Service() {
     protected abstract fun createLocationFlow(): Flow<T>
 
+    protected val locationManager: LocationManager by lazy {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            getSystemService(LocationManager::class.java)
+        } else {
+            @Suppress("DEPRECATION")
+            getSystemService(LOCATION_SERVICE) as LocationManager
+        }
+    }
+
     val handler = CoroutineExceptionHandler { _, t ->
         Log.e(TAG.simpleName, "Exception caught in simulator", t)
         broadcastState(LocationServiceState.Error(t.message ?: "Flow collection error"))
@@ -24,7 +40,7 @@ abstract class LocationService<T> : Service() {
         Log.d(TAG.simpleName, "Creating LocationSimulator (lazy initialization)")
         LocationSimulator(
             locationFlow = createLocationFlow(),
-            onTick = { tick -> Log.i(TAG.simpleName, "Tick: $tick") },
+            onTick = this::onTick,
             onComplete = { Log.i(TAG.simpleName, "Simulation completed") },
             backgroundScope = CoroutineScope(
                 Dispatchers.Default.limitedParallelism(1) +
@@ -32,6 +48,17 @@ abstract class LocationService<T> : Service() {
             )
         ).also {
             Log.d(TAG.simpleName, "LocationSimulator created successfully")
+        }
+    }
+
+    private fun onTick(tick: T) {
+        try {
+            Log.d(TAG.simpleName, "onTick() called with tick: $tick")
+            val location = tick as? Location
+                ?: throw IllegalArgumentException("Tick is not a Location: $tick")
+            locationManager.setTestProviderLocation(LocationManager.GPS_PROVIDER, location)
+        } catch (e: SecurityException) {
+            Log.e(TAG.simpleName, "Failed to set mock location", e)
         }
     }
 
@@ -44,7 +71,51 @@ abstract class LocationService<T> : Service() {
         super.onCreate()
         Log.d(TAG.simpleName, "onCreate() called")
         startForegroundNotification()
+        setupMockLocationProvider()
         Log.d(TAG.simpleName, "onCreate() completed")
+    }
+
+    private fun setupMockLocationProvider() {
+        try {
+            Log.d(TAG.simpleName, "Setting up mock location provider")
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                locationManager.addTestProvider(
+                    LocationManager.GPS_PROVIDER,
+                    ProviderProperties.Builder()
+                        .setHasNetworkRequirement(false)
+                        .setHasSatelliteRequirement(false)
+                        .setHasCellRequirement(false)
+                        .setHasMonetaryCost(false)
+                        .setHasAltitudeSupport(true)
+                        .setHasSpeedSupport(true)
+                        .setHasBearingSupport(true)
+                        .setPowerUsage(ProviderProperties.POWER_USAGE_LOW)
+                        .setAccuracy(ProviderProperties.ACCURACY_FINE)
+                        .build()
+                )
+            } else {
+                @Suppress("DEPRECATION")
+                @SuppressLint("WrongConstant")
+                locationManager.addTestProvider(
+                    LocationManager.GPS_PROVIDER,
+                    false, // requiresNetwork
+                    false, // requiresSatellite
+                    false, // requiresCell
+                    false, // hasMonetaryCost
+                    true,  // supportsAltitude
+                    true,  // supportsSpeed
+                    true,  // supportsBearing
+                    Criteria.POWER_LOW,
+                    Criteria.ACCURACY_FINE,
+                )
+            }
+            locationManager.setTestProviderEnabled(LocationManager.GPS_PROVIDER, true)
+            Log.d(TAG.simpleName, "Mock location provider enabled")
+        } catch (e: SecurityException) {
+            Log.e(TAG.simpleName, "Failed to enable mock location provider - missing permissions?", e)
+        } catch (e: IllegalArgumentException) {
+            Log.e(TAG.simpleName, "Test provider already exists or invalid parameters", e)
+        }
     }
 
     override fun onStartCommand(
@@ -109,7 +180,20 @@ abstract class LocationService<T> : Service() {
         Log.d(TAG.simpleName, "onDestroy() called")
         super.onDestroy()
         simulator.stop()
+        cleanupMockLocationProvider()
         Log.d(TAG.simpleName, "onDestroy() completed")
+    }
+
+    private fun cleanupMockLocationProvider() {
+        try {
+            Log.d(TAG.simpleName, "Cleaning up mock location provider")
+            locationManager.removeTestProvider(LocationManager.GPS_PROVIDER)
+            Log.d(TAG.simpleName, "Mock location provider removed")
+        } catch (e: IllegalArgumentException) {
+            Log.w(TAG.simpleName, "Test provider was not registered or already removed", e)
+        } catch (e: Exception) {
+            Log.e(TAG.simpleName, "Failed to remove mock location provider", e)
+        }
     }
 
     private fun startForegroundNotification() {
@@ -133,14 +217,24 @@ abstract class LocationService<T> : Service() {
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .build()
 
-        Log.d(TAG.simpleName, "Calling startForeground()")
-        startForeground(1, notification)
+        startForeground(notification)
+    }
+
+    private fun startForeground(notification: Notification) {
+        Log.d(TAG.simpleName, "startForeground() called")
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            startForeground(
+                1,
+                notification,
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION
+            )
+        } else {
+            startForeground(1, notification)
+        }
         Log.d(TAG.simpleName, "startForeground() completed")
     }
 
     private fun broadcastState(state: LocationServiceState) {
-        Log.d(TAG.simpleName, "broadcastState() called with state: $state")
-        // Update the singleton state manager
         LocationServiceStateProvider.updateState(state)
     }
 

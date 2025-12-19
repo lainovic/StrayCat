@@ -32,7 +32,7 @@ class MainActivity : ComponentActivity() {
     private val viewModel: SimulationViewModel by viewModels {
         val service = LocationServiceFacade(
             application,
-            TickerLocationService::class.java
+            MockLocationService::class.java
         )
         SimulationViewModelFactory(service)
     }

@@ -1,24 +1,10 @@
 package com.lainovic.tomtom.straycat
 
-import java.io.Serializable
-
-sealed class LocationServiceState : Serializable {
-    object Idle : LocationServiceState() {
-        private fun readResolve(): Any = Idle
-    }
-
-    object Running : LocationServiceState() {
-        private fun readResolve(): Any = Running
-    }
-
-    object Paused : LocationServiceState() {
-        private fun readResolve(): Any = Paused
-    }
-
-    object Stopped : LocationServiceState() {
-        private fun readResolve(): Any = Stopped
-    }
-
+sealed class LocationServiceState {
+    object Idle : LocationServiceState()
+    object Running : LocationServiceState()
+    object Paused : LocationServiceState()
+    object Stopped : LocationServiceState()
     data class Error(val message: String) : LocationServiceState()
 
     override fun toString(): String {
