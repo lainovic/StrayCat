@@ -13,6 +13,7 @@ class LocationSimulator<T>(
     private val locationFlow: Flow<T>,
     private val onTick: suspend (T) -> Unit,
     private val onComplete: () -> Unit = {},
+    private val onError: (Throwable) -> Unit = {},
     private val backgroundScope: CoroutineScope,
 ) {
     private val isPaused = MutableStateFlow(false)
@@ -60,7 +61,7 @@ class LocationSimulator<T>(
                 }
         } catch (e: Exception) {
             Log.e(TAG, "Exception in collect()", e)
-            throw e
+            onError(e)
         }
     }
 

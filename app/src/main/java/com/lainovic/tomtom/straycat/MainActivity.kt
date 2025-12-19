@@ -19,9 +19,14 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.lainovic.tomtom.straycat.screens.RouteBuilderScreen
+import com.lainovic.tomtom.straycat.screens.SimulationScreen
 import com.lainovic.tomtom.straycat.ui.theme.StrayCatTheme
 
 class MainActivity : ComponentActivity() {
@@ -54,20 +59,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             StrayCatTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    val state by viewModel.state.collectAsState()
-                    val startStopText by viewModel.startStopButtonText.collectAsState()
-                    val pauseResumeText by viewModel.pauseResumeButtonText.collectAsState()
-
-                    MainScreen(
-                        modifier = Modifier.padding(innerPadding),
-                        state = state,
-                        startStopButtonText = startStopText,
-                        pauseResumeButtonText = pauseResumeText,
-                        onStartStopClick = { viewModel.startStop() },
-                        onPauseResumeClick = { viewModel.pauseResume() },
-                    )
-                }
+                StrayCatApp()
             }
         }
 
@@ -81,6 +73,48 @@ class MainActivity : ComponentActivity() {
                 android.Manifest.permission.ACCESS_COARSE_LOCATION,
             )
         )
+    }
+
+    @Composable
+    fun StrayCatApp() {
+        val navController = rememberNavController()
+
+        Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+            NavHost(
+                navController = navController,
+                startDestination = "route_builder",
+                modifier = Modifier.padding(innerPadding)
+            ) {
+                composable("route_builder") {
+                    RouteBuilderScreen(
+                        onNavigateToSimulation = {
+                            navController.navigate("simulation")
+                        }
+                    )
+                }
+
+                composable("simulation") {
+                    SimulationScreen(
+                        onNavigateBack = {
+                            navController.popBackStack()
+                        }
+                    )
+                }
+            }
+//            val state by viewModel.state.collectAsState()
+//            val startStopText by viewModel.startStopButtonText.collectAsState()
+//            val pauseResumeText by viewModel.pauseResumeButtonText.collectAsState()
+//
+//
+//            MainScreen(
+//                modifier = Modifier.padding(innerPadding),
+//                state = state,
+//                startStopButtonText = startStopText,
+//                pauseResumeButtonText = pauseResumeText,
+//                onStartStopClick = { viewModel.startStop() },
+//                onPauseResumeClick = { viewModel.pauseResume() },
+//            )
+        }
     }
 
     @Composable

@@ -16,6 +16,18 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+
+        val artifactoryTomtomgroupComUrl: String by extra
+        val artifactoryTomtomgroupComUsername: String by extra
+        val artifactoryTomtomgroupComPassword: String by extra
+        maven {
+            name = "TomTom Artifactory"
+            url = uri(artifactoryTomtomgroupComUrl)
+            credentials {
+                username = artifactoryTomtomgroupComUsername
+                password = artifactoryTomtomgroupComPassword
+            }
+        }
     }
 }
 
