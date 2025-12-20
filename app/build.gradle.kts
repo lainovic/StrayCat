@@ -37,10 +37,6 @@ android {
 }
 
 dependencies {
-    // Force Kotlin stdlib version to match compiler
-    implementation(platform("org.jetbrains.kotlin:kotlin-bom:2.1.0"))
-    implementation("org.jetbrains.kotlin:kotlin-stdlib:2.1.0")
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
