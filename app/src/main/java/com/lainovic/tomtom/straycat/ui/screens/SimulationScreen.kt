@@ -1,4 +1,4 @@
-package com.lainovic.tomtom.straycat.screens
+package com.lainovic.tomtom.straycat.ui.screens
 
 import androidx.compose.runtime.Composable
 

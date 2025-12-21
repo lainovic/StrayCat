@@ -6,25 +6,9 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.fragment.app.FragmentActivity
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
-import com.lainovic.tomtom.straycat.screens.RouteBuilderScreen
-import com.lainovic.tomtom.straycat.screens.SimulationScreen
+import com.google.android.libraries.places.api.Places
+import com.lainovic.tomtom.straycat.application.StrayCatApp
 import com.lainovic.tomtom.straycat.ui.theme.StrayCatTheme
 
 class MainActivity : FragmentActivity() {
@@ -55,6 +39,13 @@ class MainActivity : FragmentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
+        if (!Places.isInitialized()) {
+            Places.initializeWithNewPlacesApiEnabled(
+                applicationContext,
+                BuildConfig.GOOGLE_PLACES_API_KEY,
+            )
+        }
+
         setContent {
             StrayCatTheme {
                 StrayCatApp()
@@ -73,99 +64,48 @@ class MainActivity : FragmentActivity() {
         )
     }
 
-    @Composable
-    fun StrayCatApp() {
-        val navController = rememberNavController()
-
-        Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-            NavHost(
-                navController = navController,
-                startDestination = "route_builder",
-                modifier = Modifier.padding(innerPadding)
-            ) {
-                composable("route_builder") {
-                    RouteBuilderScreen(
-                        onNavigateToSimulation = {
-                            navController.navigate("simulation")
-                        }
-                    )
-                }
-
-                composable("simulation") {
-                    SimulationScreen(
-                        onNavigateBack = {
-                            navController.popBackStack()
-                        }
-                    )
-                }
-            }
-//            val state by viewModel.state.collectAsState()
-//            val startStopText by viewModel.startStopButtonText.collectAsState()
-//            val pauseResumeText by viewModel.pauseResumeButtonText.collectAsState()
+//    @Composable
+//    fun MainScreen(
+//        modifier: Modifier = Modifier,
+//        state: LocationServiceState = LocationServiceState.Idle,
+//        startStopButtonText: String = "Start",
+//        pauseResumeButtonText: String = "Pause/Resume",
+//        onStartStopClick: () -> Unit = {},
+//        onPauseResumeClick: () -> Unit = {}
+//    ) {
+//        val context = LocalContext.current
 //
+//        // Show toast when error occurs
+//        LaunchedEffect(state) {
+//            if (state is LocationServiceState.Error) {
+//                Toast.makeText(
+//                    context,
+//                    "Error: ${state.message}",
+//                    Toast.LENGTH_LONG
+//                ).show()
+//            }
+//        }
 //
-//            MainScreen(
-//                modifier = Modifier.padding(innerPadding),
-//                state = state,
-//                startStopButtonText = startStopText,
-//                pauseResumeButtonText = pauseResumeText,
-//                onStartStopClick = { viewModel.startStop() },
-//                onPauseResumeClick = { viewModel.pauseResume() },
-//            )
-        }
-    }
-
-    @Composable
-    fun MainScreen(
-        modifier: Modifier = Modifier,
-        state: LocationServiceState = LocationServiceState.Idle,
-        startStopButtonText: String = "Start",
-        pauseResumeButtonText: String = "Pause/Resume",
-        onStartStopClick: () -> Unit = {},
-        onPauseResumeClick: () -> Unit = {}
-    ) {
-        val context = LocalContext.current
-
-        // Show toast when error occurs
-        LaunchedEffect(state) {
-            if (state is LocationServiceState.Error) {
-                Toast.makeText(
-                    context,
-                    "Error: ${state.message}",
-                    Toast.LENGTH_LONG
-                ).show()
-            }
-        }
-
-        Box(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(24.dp),
-            contentAlignment = Alignment.BottomEnd,
-        ) {
-            Button(onClick = onStartStopClick) {
-                Text(startStopButtonText)
-            }
-        }
-
-        Box(
-            modifier = modifier
-                .fillMaxSize()
-                .padding(24.dp),
-            contentAlignment = Alignment.BottomStart,
-        ) {
-            Button(onClick = onPauseResumeClick) {
-                Text(pauseResumeButtonText)
-            }
-        }
-    }
-
-
-    @Preview(showBackground = true)
-    @Composable
-    fun MainScreenPreview() {
-        StrayCatTheme {
-            MainScreen()
-        }
-    }
+//        Box(
+//            modifier = modifier
+//                .fillMaxSize()
+//                .padding(24.dp),
+//            contentAlignment = Alignment.BottomEnd,
+//        ) {
+//            Button(onClick = onStartStopClick) {
+//                Text(startStopButtonText)
+//            }
+//        }
+//
+//        Box(
+//            modifier = modifier
+//                .fillMaxSize()
+//                .padding(24.dp),
+//            contentAlignment = Alignment.BottomStart,
+//        ) {
+//            Button(onClick = onPauseResumeClick) {
+//                Text(pauseResumeButtonText)
+//            }
+//        }
+//    }
 }

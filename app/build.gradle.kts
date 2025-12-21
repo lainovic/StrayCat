@@ -1,3 +1,5 @@
+import org.apache.tools.ant.property.LocalProperties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -15,9 +17,12 @@ android {
         versionCode = 1
         versionName = "1.0"
 
-        val apiKey = project.property("tomtomApiKey") ?: ""
-        buildConfigField("String", "TOMTOM_API_KEY", "\"${apiKey}\"")
+        val tomtomApiKey = project.property("tomtomApiKey") ?: ""
+        buildConfigField("String", "TOMTOM_API_KEY", "\"${tomtomApiKey}\"")
 
+        val googlePlacesApiKey = project.property("googlePlacesApiKey") ?: ""
+        buildConfigField("String", "GOOGLE_PLACES_API_KEY", "\"${googlePlacesApiKey}\"")
+        
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
