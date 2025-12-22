@@ -1,7 +1,7 @@
 package com.lainovic.tomtom.straycat.ui.components
 
 import android.location.Location
-import android.view.View
+import android.util.Log
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -14,22 +14,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.fragment.app.FragmentActivity
-import androidx.fragment.app.FragmentManager
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.lainovic.tomtom.straycat.BuildConfig
-import com.lainovic.tomtom.straycat.R
+import com.lainovic.tomtom.straycat.shared.toLocation
+import com.tomtom.quantity.Distance
+import com.tomtom.sdk.location.DefaultLocationProviderFactory
 import com.tomtom.sdk.location.GeoPoint
+import com.tomtom.sdk.location.LocationProviderConfig
+import com.tomtom.sdk.map.display.location.LocationMarkerOptions
 import com.tomtom.sdk.map.display.MapOptions
 import com.tomtom.sdk.map.display.TomTomMap
 import com.tomtom.sdk.map.display.annotation.AlphaInitialCameraOptionsApi
 import com.tomtom.sdk.map.display.camera.CameraOptions
-import com.tomtom.sdk.map.display.common.WidthByZoom
-import com.tomtom.sdk.map.display.image.ImageFactory
 import com.tomtom.sdk.map.display.marker.Marker
-import com.tomtom.sdk.map.display.marker.MarkerOptions
 import com.tomtom.sdk.map.display.polyline.Polyline
-import com.tomtom.sdk.map.display.polyline.PolylineOptions
 import com.tomtom.sdk.map.display.ui.MapFragment
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -54,31 +54,51 @@ fun MapView(
     var routePolyline by remember { mutableStateOf<Polyline?>(null) }
 
     var mapFragment by remember { mutableStateOf<MapFragment?>(null) }
-    var isMapFragmentReady by remember { mutableStateOf(false) }
 
     val mapOptions = remember {
         MapOptions(mapKey = BuildConfig.TOMTOM_API_KEY)
     }
 
+    val locationProviderConfig = LocationProviderConfig(
+        minTimeInterval = 250L.milliseconds,
+        minDistance = Distance.meters(5.0)
+    )
+
+    val defaultLocationProvider = DefaultLocationProviderFactory.create(
+        context = context,
+        config = locationProviderConfig
+    )
+
+    mapFragment?.let { fragment ->
+        AndroidView(
+            modifier = modifier.fillMaxSize(),
+            factory = {
+                fragment.requireView()
+            }
+        )
+    }
+
     LaunchedEffect(Unit) {
         createTomTomMapFragment(fragmentManager, mapOptions) { fragment ->
             mapFragment = fragment
-            isMapFragmentReady = true
         }
     }
 
     LaunchedEffect(tomtomMap, origin) {
         val map = tomtomMap ?: return@LaunchedEffect
-        val origin = origin ?: return@LaunchedEffect
+        val origin = origin ?: run {
+            originMarker?.remove()
+            originMarker = null
+            return@LaunchedEffect
+        }
 
         originMarker = map.updateMarker(
             originMarker,
             origin,
-            R.drawable.start_pin
         )
 
-        destination?.let { dest ->
-            map.animateToBounds(listOf(origin, dest))
+        destination?.let { destination ->
+            map.animateToBounds(listOf(origin, destination))
         } ?: run {
             map.animateToLocation(origin)
         }
@@ -86,16 +106,19 @@ fun MapView(
 
     LaunchedEffect(tomtomMap, destination) {
         val map = tomtomMap ?: return@LaunchedEffect
-        val destination = destination ?: return@LaunchedEffect
+        val destination = destination ?: run {
+            destinationMarker?.remove()
+            destinationMarker = null
+            return@LaunchedEffect
+        }
 
         destinationMarker = map.updateMarker(
             destinationMarker,
             destination,
-            R.drawable.flag_pin
         )
 
-        origin?.let { orig ->
-            map.animateToBounds(listOf(orig, destination))
+        origin?.let { origin ->
+            map.animateToBounds(listOf(origin, destination))
         } ?: run {
             map.animateToLocation(destination)
         }
@@ -104,23 +127,14 @@ fun MapView(
     LaunchedEffect(tomtomMap, points) {
         val map = tomtomMap ?: return@LaunchedEffect
         if (points.isEmpty()) {
+            routePolyline?.remove()
+            routePolyline = null
             return@LaunchedEffect
         }
 
-        val geoPoints = points.map { location ->
-            GeoPoint(
-                latitude = location.latitude,
-                longitude = location.longitude
-            )
-        }
-
-        routePolyline?.remove()
-        routePolyline = map.addPolyline(
-            PolylineOptions(
-                coordinates = geoPoints,
-                lineColor = 0xFF0000FF.toInt(),
-                lineWidths = listOf(WidthByZoom(zoom = 10.0, width = 8.0)),
-            )
+        routePolyline = map.updatePolyline(
+            routePolyline,
+            points,
         )
     }
 
@@ -130,15 +144,6 @@ fun MapView(
         }
     }
 
-    if (isMapFragmentReady) {
-        AndroidView(
-            modifier = modifier.fillMaxSize(),
-            factory = { ctx ->
-                mapFragment?.requireView() ?: View(ctx)
-            }
-        )
-    }
-
     LaunchedEffect(tomtomMap) {
         tomtomMap?.let { map ->
             val cameraOptions = CameraOptions(
@@ -146,111 +151,50 @@ fun MapView(
                 zoom = 2.0,
             )
             map.animateCamera(cameraOptions, animationDuration = 1000.milliseconds)
+            map.addMapLongClickListener { point ->
+                onMapLongPress(point.toLocation())
+                true
+            }
+
+            map.setLocationProvider(defaultLocationProvider)
+            defaultLocationProvider.enable()
+            map.enableLocationMarker(
+                LocationMarkerOptions(type = LocationMarkerOptions.Type.Chevron)
+            )
         }
     }
 
     DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { source, event ->
-            // Handle lifecycle events if needed
+        val observer = LifecycleEventObserver { _, event ->
+            Log.d("MapView", "Lifecycle event: $event")
+            when (event) {
+                Lifecycle.Event.ON_RESUME -> {
+                    Log.d("MapView", "ON_RESUME")
+                }
+
+                Lifecycle.Event.ON_PAUSE -> {
+                    Log.d("MapView", "ON_PAUSE")
+                }
+
+                Lifecycle.Event.ON_DESTROY -> {
+                    Log.d("MapView", "ON_DESTROY")
+                }
+
+                else -> {
+                    Log.d("MapView", "Other event: $event")
+                }
+            }
         }
 
         lifecycleOwner.lifecycle.addObserver(observer)
 
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
+            fragmentManager.beginTransaction()
+                .remove(mapFragment!!)
+                .commitNow()
         }
     }
 }
 
-private fun createTomTomMapFragment(
-    fragmentManager: FragmentManager,
-    mapOptions: MapOptions,
-    onFragmentReady: (MapFragment) -> Unit
-) {
-    val fragment = fragmentManager.findFragmentById(R.id.map_container) as MapFragment?
-    val newFragment = fragment ?: MapFragment.newInstance(mapOptions)
-    fragmentManager.beginTransaction()
-        .add(newFragment, "map_fragment")
-        .commitNow()
-    onFragmentReady(newFragment)
-}
 
-private fun TomTomMap.updateMarker(
-    existingMarker: Marker?,
-    location: Location,
-    resourceId: Int,
-): Marker {
-    existingMarker?.remove()
-
-    return addMarker(
-        MarkerOptions(
-            coordinate = GeoPoint(
-                latitude = location.latitude,
-                longitude = location.longitude
-            ),
-            pinImage = ImageFactory.fromResource(resourceId)
-        )
-    )
-}
-
-private fun TomTomMap.animateToLocation(
-    location: Location,
-    zoom: Double = 15.0,
-    duration: Long = 1000,
-) {
-    animateCamera(
-        CameraOptions(
-            position = GeoPoint(
-                latitude = location.latitude,
-                longitude = location.longitude
-            ),
-            zoom = zoom,
-        ),
-        animationDuration = duration.milliseconds,
-    )
-}
-
-private fun TomTomMap.animateToBounds(
-    locations: List<Location>,
-    padding: Int = 100,
-    duration: Long = 1000,
-) {
-    if (locations.isEmpty()) return
-
-    if (locations.size == 1) {
-        animateToLocation(locations.first())
-        return
-    }
-
-    val latitudes = locations.map { it.latitude }
-    val longitudes = locations.map { it.longitude }
-
-    val minLat = latitudes.min()
-    val maxLat = latitudes.max()
-    val minLon = longitudes.min()
-    val maxLon = longitudes.max()
-
-    val centerLat = (minLat + maxLat) / 2
-    val centerLon = (minLon + maxLon) / 2
-
-    val latDiff = maxLat - minLat
-    val lonDiff = maxLon - minLon
-    val maxDiff = maxOf(latDiff, lonDiff)
-
-    val zoom = when {
-        maxDiff > 10 -> 4.0
-        maxDiff > 5 -> 6.0
-        maxDiff > 1 -> 8.0
-        maxDiff > 0.5 -> 10.0
-        maxDiff > 0.1 -> 12.0
-        else -> 14.0
-    }
-
-    animateCamera(
-        CameraOptions(
-            position = GeoPoint(latitude = centerLat, longitude = centerLon),
-            zoom = zoom,
-        ),
-        animationDuration = duration.milliseconds,
-    )
-}

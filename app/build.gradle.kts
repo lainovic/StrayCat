@@ -62,7 +62,9 @@ dependencies {
 
     // 3rd party libraries
     implementation(libs.tomtom.sdk.maps)
+    implementation(libs.tomtom.sdk.maps.api)
     implementation(libs.tomtom.sdk.routing)
+    implementation(libs.tomtom.sdk.location.provider)
     implementation(libs.google.places)
 
     testImplementation(libs.junit)

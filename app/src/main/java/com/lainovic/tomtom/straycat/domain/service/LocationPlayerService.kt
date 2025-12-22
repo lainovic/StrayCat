@@ -1,4 +1,4 @@
-package com.lainovic.tomtom.straycat
+package com.lainovic.tomtom.straycat.domain.service
 
 import android.annotation.SuppressLint
 import android.app.Notification
@@ -14,15 +14,13 @@ import android.location.provider.ProviderProperties
 import android.os.Build
 import android.os.IBinder
 import android.util.Log
+import com.lainovic.tomtom.straycat.R
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
 
-abstract class LocationService : Service() {
-    protected abstract fun observeLocations(): Flow<Location>
-
-    protected val locationManager: LocationManager by lazy {
+class LocationPlayerService : Service() {
+    val locationManager: LocationManager by lazy {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             getSystemService(LocationManager::class.java)
         } else {
@@ -37,9 +35,7 @@ abstract class LocationService : Service() {
             broadcastState(LocationServiceState.Error(throwable.message ?: "Flow collection error"))
         }
 
-        Log.d(TAG.simpleName, "Creating LocationSimulator (lazy initialization)")
         LocationSimulator(
-            locationFlow = observeLocations(),
             onTick = this::onTick,
             onComplete = { Log.i(TAG.simpleName, "Simulation completed") },
             backgroundScope = CoroutineScope(
@@ -236,7 +232,7 @@ abstract class LocationService : Service() {
     }
 
     companion object {
-        val TAG = LocationService::class
+        val TAG = LocationPlayerService::class
         const val ACTION_START = "com.lainovic.tomtom.straycat.action.START"
         const val ACTION_STOP = "com.lainovic.tomtom.straycat.action.STOP"
         const val ACTION_PAUSE = "com.lainovic.tomtom.straycat.action.PAUSE"

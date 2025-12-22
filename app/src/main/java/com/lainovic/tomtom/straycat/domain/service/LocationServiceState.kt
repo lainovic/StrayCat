@@ -1,4 +1,4 @@
-package com.lainovic.tomtom.straycat
+package com.lainovic.tomtom.straycat.domain.service
 
 sealed class LocationServiceState {
     object Idle : LocationServiceState()

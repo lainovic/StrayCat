@@ -15,8 +15,8 @@ UI → ViewModel → Facade → Service → Simulator → Flow
 |------|---------|-------|
 | `MainActivity.kt` | UI & Permissions | Presentation |
 | `LocationPlayerViewModel.kt` | UI Logic | Presentation |
-| `LocationServiceFacade.kt` | Service Abstraction | Facade |
-| `LocationService.kt` | Background Work | Service |
+| `LocationPlayerServiceFacade.kt` | Service Abstraction | Facade |
+| `LocationPlayerService.kt` | Background Work | Service |
 | `TickerLocationService.kt` | Ticker Implementation | Service |
 | `LocationSimulator.kt` | Flow Collection | Simulation |
 | `LocationServiceState.kt` | State Model | Domain |

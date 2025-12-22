@@ -5,9 +5,7 @@ import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.viewModels
 import androidx.fragment.app.FragmentActivity
-import com.google.android.libraries.places.api.Places
 import com.lainovic.tomtom.straycat.application.StrayCatApp
 import com.lainovic.tomtom.straycat.ui.theme.StrayCatTheme
 
@@ -16,39 +14,13 @@ class MainActivity : FragmentActivity() {
         ActivityResultContracts.RequestMultiplePermissions()
     ) { handlePermissions(it) }
 
-    private val viewModel: SimulationViewModel by viewModels {
-        val service = LocationServiceFacade(
-            application,
-            MockLocationService::class.java
-        )
-        SimulationViewModelFactory(service)
-    }
-
-    private fun handlePermissions(permissions: Map<String, Boolean>) {
-        val allGranted = permissions.all { it.value }
-        if (!allGranted) {
-            Toast.makeText(
-                this,
-                "Location permissions are required for Stray Cat to function properly.",
-                Toast.LENGTH_LONG
-            ).show()
-        }
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        if (!Places.isInitialized()) {
-            Places.initializeWithNewPlacesApiEnabled(
-                applicationContext,
-                BuildConfig.GOOGLE_PLACES_API_KEY,
-            )
-        }
-
         setContent {
             StrayCatTheme {
-                StrayCatApp()
+                StrayCatApp(applicationContext)
             }
         }
 
@@ -63,6 +35,18 @@ class MainActivity : FragmentActivity() {
             )
         )
     }
+
+    private fun handlePermissions(permissions: Map<String, Boolean>) {
+        val allGranted = permissions.all { it.value }
+        if (!allGranted) {
+            Toast.makeText(
+                this,
+                "Location permissions are required for Stray Cat to function properly.",
+                Toast.LENGTH_LONG
+            ).show()
+        }
+    }
+
 
 //    @Composable
 //    fun MainScreen(

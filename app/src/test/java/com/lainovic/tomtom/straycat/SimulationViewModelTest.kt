@@ -2,6 +2,9 @@ package com.lainovic.tomtom.straycat
 
 import android.app.Application
 import androidx.test.core.app.ApplicationProvider
+import com.lainovic.tomtom.straycat.domain.service.LocationPlayerService
+import com.lainovic.tomtom.straycat.domain.service.LocationServiceState
+import com.lainovic.tomtom.straycat.ui.route_player.RoutePlayerViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -18,12 +21,12 @@ import org.robolectric.annotation.Config
 class SimulationViewModelTest {
 
     private lateinit var application: Application
-    private lateinit var viewModel: SimulationViewModel
+    private lateinit var viewModel: RoutePlayerViewModel
 
     @Before
     fun setup() {
         application = ApplicationProvider.getApplicationContext()
-        viewModel = SimulationViewModel(application)
+        viewModel = RoutePlayerViewModel(application)
     }
 
     @Test
@@ -45,8 +48,8 @@ class SimulationViewModelTest {
         // And: Service is started with START action
         val shadowApplication = shadowOf(application)
         val startedService = shadowApplication.nextStartedService
-        assertEquals(LocationService::class.java.name, startedService.component?.className)
-        assertEquals(LocationService.ACTION_START, startedService.action)
+        assertEquals(LocationPlayerService::class.java.name, startedService.component?.className)
+        assertEquals(LocationPlayerService.ACTION_START, startedService.action)
     }
 
     @Test
@@ -65,7 +68,7 @@ class SimulationViewModelTest {
         // And: Service is started with STOP action
         val shadowApplication = shadowOf(application)
         val startedService = shadowApplication.nextStartedService
-        assertEquals(LocationService.ACTION_STOP, startedService.action)
+        assertEquals(LocationPlayerService.ACTION_STOP, startedService.action)
     }
 
     @Test
@@ -85,7 +88,7 @@ class SimulationViewModelTest {
         // And: Service is started with STOP action
         val shadowApplication = shadowOf(application)
         val startedService = shadowApplication.nextStartedService
-        assertEquals(LocationService.ACTION_STOP, startedService.action)
+        assertEquals(LocationPlayerService.ACTION_STOP, startedService.action)
     }
 
     @Test
@@ -105,7 +108,7 @@ class SimulationViewModelTest {
         // And: Service is started with START action
         val shadowApplication = shadowOf(application)
         val startedService = shadowApplication.nextStartedService
-        assertEquals(LocationService.ACTION_START, startedService.action)
+        assertEquals(LocationPlayerService.ACTION_START, startedService.action)
     }
 
     @Test
@@ -124,7 +127,7 @@ class SimulationViewModelTest {
         // And: Service is started with PAUSE action
         val shadowApplication = shadowOf(application)
         val startedService = shadowApplication.nextStartedService
-        assertEquals(LocationService.ACTION_PAUSE, startedService.action)
+        assertEquals(LocationPlayerService.ACTION_PAUSE, startedService.action)
     }
 
     @Test
@@ -144,7 +147,7 @@ class SimulationViewModelTest {
         // And: Service is started with RESUME action
         val shadowApplication = shadowOf(application)
         val startedService = shadowApplication.nextStartedService
-        assertEquals(LocationService.ACTION_RESUME, startedService.action)
+        assertEquals(LocationPlayerService.ACTION_RESUME, startedService.action)
     }
 
     @Test

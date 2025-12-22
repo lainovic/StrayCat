@@ -36,7 +36,9 @@ kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-cor
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
 androidx-test-core = { group = "androidx.test", name = "core", version = "1.5.0" }
 androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "androidx-navigation" }
+tomtom-sdk-location-provider = { group = "com.tomtom.sdk.location", name = "provider-default", version.ref = "tomtomSdk" }
 tomtom-sdk-maps = { group = "com.tomtom.sdk.maps", name = "map-display", version.ref = "tomtomSdk" }
+tomtom-sdk-maps-api = { group = "com.tomtom.sdk.maps", name = "map-display-api", version.ref = "tomtomSdk" }
 tomtom-sdk-routing = { group = "com.tomtom.sdk.routing", name = "route-planner-online", version.ref = "tomtomSdk" }
 google-places = { group = "com.google.android.libraries.places", name = "places", version.ref = "googleSdk" }
 

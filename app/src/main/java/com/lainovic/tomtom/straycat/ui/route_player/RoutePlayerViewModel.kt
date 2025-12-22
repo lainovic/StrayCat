@@ -1,18 +1,23 @@
-package com.lainovic.tomtom.straycat
+package com.lainovic.tomtom.straycat.ui.route_player
 
+import android.location.Location
 import android.util.Log
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.lainovic.tomtom.straycat.domain.service.LocationDataSource
+import com.lainovic.tomtom.straycat.domain.service.LocationPlayerServiceFacade
+import com.lainovic.tomtom.straycat.domain.service.LocationServiceState
+import com.lainovic.tomtom.straycat.domain.service.LocationServiceStateProvider
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
-class SimulationViewModel(
-    private val service: LocationServiceFacade,
+internal class RoutePlayerViewModel(
+    private val service: LocationPlayerServiceFacade,
 ) : ViewModel() {
-    val state: StateFlow<LocationServiceState>
-        = LocationServiceStateProvider.state
+    val state: StateFlow<LocationServiceState> = LocationServiceStateProvider.state
 
     val startStopButtonText: StateFlow<String> = state.map { currentState ->
         when (currentState) {
@@ -43,19 +48,27 @@ class SimulationViewModel(
         Log.d(TAG.simpleName, "LocationPlayerViewModel created")
     }
 
-    fun startStop() {
+    fun startStop(locations: List<Location>) {
+        if (locations.isEmpty()) {
+            Log.d(TAG.simpleName, "startStop() called with empty locations list, aborting")
+            return
+        }
+
         Log.d(TAG.simpleName, "startStop() called, current state: ${state.value}")
         when (state.value) {
             LocationServiceState.Idle,
             LocationServiceState.Stopped,
             is LocationServiceState.Error -> {
                 Log.d(TAG.simpleName, "Starting service")
+                LocationDataSource.update(locations)
                 service.start()
             }
+
             LocationServiceState.Running,
             LocationServiceState.Paused -> {
                 Log.d(TAG.simpleName, "Stopping service")
                 service.stop()
+                LocationDataSource.clear()
             }
         }
         Log.d(TAG.simpleName, "startStop() completed")
@@ -68,10 +81,12 @@ class SimulationViewModel(
                 Log.d(TAG.simpleName, "Pausing service")
                 service.pause()
             }
+
             LocationServiceState.Paused -> {
                 Log.d(TAG.simpleName, "Resuming service")
                 service.resume()
             }
+
             else -> {
                 Log.d(TAG.simpleName, "pauseResumeSimulation called in invalid state: ${state.value}")
             }
@@ -86,7 +101,16 @@ class SimulationViewModel(
         Log.d(TAG.simpleName, "onCleared() completed")
     }
 
-    private companion object {
-        val TAG = SimulationViewModel::class
+    companion object {
+        val TAG = RoutePlayerViewModel::class
+
+        fun Factory(service: LocationPlayerServiceFacade): ViewModelProvider.Factory {
+            return object : ViewModelProvider.Factory {
+                @Suppress("UNCHECKED_CAST")
+                override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                    return RoutePlayerViewModel(service) as T
+                }
+            }
+        }
     }
 }
