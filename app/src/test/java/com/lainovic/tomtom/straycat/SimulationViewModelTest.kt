@@ -4,7 +4,7 @@ import android.app.Application
 import androidx.test.core.app.ApplicationProvider
 import com.lainovic.tomtom.straycat.domain.service.LocationPlayerService
 import com.lainovic.tomtom.straycat.domain.service.LocationServiceState
-import com.lainovic.tomtom.straycat.ui.route_player.RoutePlayerViewModel
+import com.lainovic.tomtom.straycat.ui.player.LocationPlayerViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -21,12 +21,12 @@ import org.robolectric.annotation.Config
 class SimulationViewModelTest {
 
     private lateinit var application: Application
-    private lateinit var viewModel: RoutePlayerViewModel
+    private lateinit var viewModel: LocationPlayerViewModel
 
     @Before
     fun setup() {
         application = ApplicationProvider.getApplicationContext()
-        viewModel = RoutePlayerViewModel(application)
+        viewModel = LocationPlayerViewModel(application)
     }
 
     @Test

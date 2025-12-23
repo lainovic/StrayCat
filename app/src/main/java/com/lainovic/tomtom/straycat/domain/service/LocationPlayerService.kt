@@ -31,46 +31,46 @@ class LocationPlayerService : Service() {
 
     private val simulator by lazy {
         val handler = CoroutineExceptionHandler { _, throwable ->
-            Log.e(TAG.simpleName, "Exception caught in simulator", throwable)
+            Log.e(TAG, "Exception caught in simulator", throwable)
             broadcastState(LocationServiceState.Error(throwable.message ?: "Flow collection error"))
         }
 
         LocationSimulator(
             onTick = this::onTick,
-            onComplete = { Log.i(TAG.simpleName, "Simulation completed") },
+            onComplete = { Log.i(TAG, "Simulation completed") },
             backgroundScope = CoroutineScope(
                 Dispatchers.Default.limitedParallelism(1) + handler
             )
         ).also {
-            Log.d(TAG.simpleName, "LocationSimulator created successfully")
+            Log.d(TAG, "LocationSimulator created successfully")
         }
     }
 
     private fun onTick(location: Location) {
         try {
-            Log.d(TAG.simpleName, "onTick() called with tick: $location")
+            Log.d(TAG, "onTick() called with tick: $location")
             locationManager.setTestProviderLocation(LocationManager.GPS_PROVIDER, location)
         } catch (e: SecurityException) {
-            Log.e(TAG.simpleName, "Failed to set mock location", e)
+            Log.e(TAG, "Failed to set mock location", e)
         }
     }
 
     override fun onBind(intent: Intent?): IBinder? {
-        Log.d(TAG.simpleName, "onBind() called")
+        Log.d(TAG, "onBind() called")
         return null
     }
 
     override fun onCreate() {
         super.onCreate()
-        Log.d(TAG.simpleName, "onCreate() called")
+        Log.d(TAG, "onCreate() called")
         startForegroundNotification()
         setupMockLocationProvider()
-        Log.d(TAG.simpleName, "onCreate() completed")
+        Log.d(TAG, "onCreate() completed")
     }
 
     private fun setupMockLocationProvider() {
         try {
-            Log.d(TAG.simpleName, "Setting up mock location provider")
+            Log.d(TAG, "Setting up mock location provider")
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 locationManager.addTestProvider(
                     LocationManager.GPS_PROVIDER,
@@ -103,11 +103,11 @@ class LocationPlayerService : Service() {
                 )
             }
             locationManager.setTestProviderEnabled(LocationManager.GPS_PROVIDER, true)
-            Log.d(TAG.simpleName, "Mock location provider enabled")
+            Log.d(TAG, "Mock location provider enabled")
         } catch (e: SecurityException) {
-            Log.e(TAG.simpleName, "Failed to enable mock location provider - missing permissions?", e)
+            Log.e(TAG, "Failed to enable mock location provider - missing permissions?", e)
         } catch (e: IllegalArgumentException) {
-            Log.e(TAG.simpleName, "Test provider already exists or invalid parameters", e)
+            Log.e(TAG, "Test provider already exists or invalid parameters", e)
         }
     }
 
@@ -115,82 +115,82 @@ class LocationPlayerService : Service() {
         intent: Intent?,
         flags: Int, startId: Int
     ): Int {
-        Log.d(TAG.simpleName, "onStartCommand() called")
-        Log.d(TAG.simpleName, "  intent: $intent")
-        Log.d(TAG.simpleName, "  action: ${intent?.action}")
-        Log.d(TAG.simpleName, "  flags: $flags, startId: $startId")
+        Log.d(TAG, "onStartCommand() called")
+        Log.d(TAG, "  intent: $intent")
+        Log.d(TAG, "  action: ${intent?.action}")
+        Log.d(TAG, "  flags: $flags, startId: $startId")
 
         try {
             val action = requireNotNull(intent?.action) { "Intent action is null" }
-            Log.d(TAG.simpleName, "Processing action: $action")
+            Log.d(TAG, "Processing action: $action")
 
             when (action) {
                 ACTION_START -> {
-                    Log.d(TAG.simpleName, "ACTION_START: Starting simulation")
+                    Log.d(TAG, "ACTION_START: Starting simulation")
                     simulator.start()
-                    Log.d(TAG.simpleName, "ACTION_START: Simulator.start() called")
+                    Log.d(TAG, "ACTION_START: Simulator.start() called")
                     broadcastState(LocationServiceState.Running)
-                    Log.d(TAG.simpleName, "ACTION_START: Broadcast sent")
+                    Log.d(TAG, "ACTION_START: Broadcast sent")
                 }
 
                 ACTION_PAUSE -> {
-                    Log.d(TAG.simpleName, "ACTION_PAUSE: Pausing simulation")
+                    Log.d(TAG, "ACTION_PAUSE: Pausing simulation")
                     simulator.pause()
-                    Log.d(TAG.simpleName, "ACTION_PAUSE: Simulator.pause() called")
+                    Log.d(TAG, "ACTION_PAUSE: Simulator.pause() called")
                     broadcastState(LocationServiceState.Paused)
-                    Log.d(TAG.simpleName, "ACTION_PAUSE: Broadcast sent")
+                    Log.d(TAG, "ACTION_PAUSE: Broadcast sent")
                 }
 
                 ACTION_RESUME -> {
-                    Log.d(TAG.simpleName, "ACTION_RESUME: Resuming simulation")
+                    Log.d(TAG, "ACTION_RESUME: Resuming simulation")
                     simulator.resume()
-                    Log.d(TAG.simpleName, "ACTION_RESUME: Simulator.resume() called")
+                    Log.d(TAG, "ACTION_RESUME: Simulator.resume() called")
                     broadcastState(LocationServiceState.Running)
-                    Log.d(TAG.simpleName, "ACTION_RESUME: Broadcast sent")
+                    Log.d(TAG, "ACTION_RESUME: Broadcast sent")
                 }
 
                 ACTION_STOP -> {
-                    Log.d(TAG.simpleName, "ACTION_STOP: Stopping simulation")
+                    Log.d(TAG, "ACTION_STOP: Stopping simulation")
                     simulator.stop()
-                    Log.d(TAG.simpleName, "ACTION_STOP: Simulator.stop() called")
+                    Log.d(TAG, "ACTION_STOP: Simulator.stop() called")
                     broadcastState(LocationServiceState.Stopped)
-                    Log.d(TAG.simpleName, "ACTION_STOP: Broadcast sent, calling stopSelf()")
+                    Log.d(TAG, "ACTION_STOP: Broadcast sent, calling stopSelf()")
                     stopSelf()
-                    Log.d(TAG.simpleName, "ACTION_STOP: stopSelf() called")
+                    Log.d(TAG, "ACTION_STOP: stopSelf() called")
                 }
             }
         } catch (e: Exception) {
-            Log.e(TAG.simpleName, "Error in onStartCommand", e)
+            Log.e(TAG, "Error in onStartCommand", e)
             broadcastState(LocationServiceState.Error(e.message ?: "Unknown error"))
             stopSelf()
         }
 
-        Log.d(TAG.simpleName, "onStartCommand() returning START_STICKY")
+        Log.d(TAG, "onStartCommand() returning START_STICKY")
         return START_STICKY
     }
 
     override fun onDestroy() {
-        Log.d(TAG.simpleName, "onDestroy() called")
+        Log.d(TAG, "onDestroy() called")
         super.onDestroy()
         simulator.stop()
         cleanupMockLocationProvider()
-        Log.d(TAG.simpleName, "onDestroy() completed")
+        Log.d(TAG, "onDestroy() completed")
     }
 
     private fun cleanupMockLocationProvider() {
         try {
-            Log.d(TAG.simpleName, "Cleaning up mock location provider")
+            Log.d(TAG, "Cleaning up mock location provider")
             locationManager.removeTestProvider(LocationManager.GPS_PROVIDER)
-            Log.d(TAG.simpleName, "Mock location provider removed")
+            Log.d(TAG, "Mock location provider removed")
         } catch (e: IllegalArgumentException) {
-            Log.w(TAG.simpleName, "Test provider was not registered or already removed", e)
+            Log.w(TAG, "Test provider was not registered or already removed", e)
         } catch (e: Exception) {
-            Log.e(TAG.simpleName, "Failed to remove mock location provider", e)
+            Log.e(TAG, "Failed to remove mock location provider", e)
         }
     }
 
     private fun startForegroundNotification() {
-        Log.d(TAG.simpleName, "startForegroundNotification() called")
+        Log.d(TAG, "startForegroundNotification() called")
         val channelId = "stray_cat_location_simulation"
 
         val channel = NotificationChannel(
@@ -202,7 +202,7 @@ class LocationPlayerService : Service() {
         val manager =
             getSystemService(NotificationManager::class.java)
         manager.createNotificationChannel(channel)
-        Log.d(TAG.simpleName, "Notification channel created")
+        Log.d(TAG, "Notification channel created")
 
         val notification = Notification.Builder(this, channelId)
             .setContentTitle("StrayCat")
@@ -214,7 +214,7 @@ class LocationPlayerService : Service() {
     }
 
     private fun startForeground(notification: Notification) {
-        Log.d(TAG.simpleName, "startForeground() called")
+        Log.d(TAG, "startForeground() called")
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             startForeground(
                 1,
@@ -224,7 +224,7 @@ class LocationPlayerService : Service() {
         } else {
             startForeground(1, notification)
         }
-        Log.d(TAG.simpleName, "startForeground() completed")
+        Log.d(TAG, "startForeground() completed")
     }
 
     private fun broadcastState(state: LocationServiceState) {
@@ -232,7 +232,7 @@ class LocationPlayerService : Service() {
     }
 
     companion object {
-        val TAG = LocationPlayerService::class
+        val TAG = LocationPlayerService::class.simpleName
         const val ACTION_START = "com.lainovic.tomtom.straycat.action.START"
         const val ACTION_STOP = "com.lainovic.tomtom.straycat.action.STOP"
         const val ACTION_PAUSE = "com.lainovic.tomtom.straycat.action.PAUSE"

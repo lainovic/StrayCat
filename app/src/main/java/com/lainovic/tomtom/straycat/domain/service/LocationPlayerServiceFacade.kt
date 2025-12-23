@@ -13,27 +13,27 @@ class LocationPlayerServiceFacade(
     private val serviceClass: Class<*>,
 ) {
     fun start() {
-        Log.d(TAG.simpleName, "start() called")
+        Log.d(TAG, "start() called")
         sendServiceIntent(LocationPlayerService.ACTION_START)
     }
 
     fun pause() {
-        Log.d(TAG.simpleName, "pause() called")
+        Log.d(TAG, "pause() called")
         sendServiceIntent(LocationPlayerService.ACTION_PAUSE)
     }
 
     fun resume() {
-        Log.d(TAG.simpleName, "resume() called")
+        Log.d(TAG, "resume() called")
         sendServiceIntent(LocationPlayerService.ACTION_RESUME)
     }
 
     fun stop() {
-        Log.d(TAG.simpleName, "stop() called")
+        Log.d(TAG, "stop() called")
         sendServiceIntent(LocationPlayerService.ACTION_STOP)
     }
 
     private fun sendServiceIntent(action: String) {
-        Log.d(TAG.simpleName, "sendServiceIntent: action=$action")
+        Log.d(TAG, "sendServiceIntent: action=$action")
         val intent = Intent(context, serviceClass)
             .apply {
                 setAction(action)
@@ -42,6 +42,6 @@ class LocationPlayerServiceFacade(
     }
 
     companion object {
-        val TAG = LocationPlayerServiceFacade::class
+        val TAG = LocationPlayerServiceFacade::class.simpleName
     }
 }

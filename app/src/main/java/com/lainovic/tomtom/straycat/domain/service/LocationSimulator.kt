@@ -11,16 +11,14 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlin.coroutines.cancellation.CancellationException
-import kotlin.math.cos
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
 
-class LocationSimulator(
-    private val configuration: LocationSimulatorConfiguration = LocationSimulatorConfiguration(),
+internal class LocationSimulator(
+    private val configuration: SimulationConfiguration = SimulationConfiguration(),
     private val onTick: suspend (Location) -> Unit,
     private val onComplete: () -> Unit = {},
     private val onError: (Throwable) -> Unit = {},
@@ -55,7 +53,7 @@ class LocationSimulator(
 
     private fun List<Location>.toFlow(): Flow<Location> = flow {
         for (location in this@toFlow) {
-            emit(postProcess(location))
+            emit(location)
         }
     }
 
@@ -67,32 +65,16 @@ class LocationSimulator(
                 accuracy = 10f // good enough for simulation
             }
 
-        // TODO apply speed multiplier if needed
+        // TODO apply speed multiplier i
         // if (configuration.speedMultiplier != 1f) {}
 
-        // Apply noise if needed
-        if (configuration.noiseLevelInMeters > 0f) {
-            val (noiseLat, noiseLon) = generateNoise()
-            processedLocation.latitude += noiseLat
-            processedLocation.longitude += noiseLon
-        }
-
         return processedLocation
-    }
-
-    private fun generateNoise(): Pair<Float, Float> = with(configuration) {
-        val noiseLat =
-            (Math.random().toFloat() - 0.5f) * 2 * noiseLevelInMeters /
-                    111320f
-        val noiseLon =
-            (Math.random().toFloat() - 0.5f) * 2 * noiseLevelInMeters /
-                    (111320f * cos(Math.toRadians(0.0))).toFloat()
-        return Pair(noiseLat, noiseLon)
     }
 
     private suspend fun Flow<Location>.collectLocations() =
         this
             .onEach { delayOrWaitUntilResumed() }
+            .map { postProcess(it) }
             .catch { e ->
                 Log.e(TAG, "Error while collecting flow", e)
                 onError(e)
@@ -146,13 +128,6 @@ class LocationSimulator(
     }
 
     companion object {
-        private const val TAG = "LocationSimulator"
+        private val TAG = LocationSimulator::class.simpleName
     }
 }
-
-data class LocationSimulatorConfiguration(
-    val delayBetweenEmissions: Duration = 1000.milliseconds,
-    val loopIndefinitely: Boolean = false,
-    val speedMultiplier: Float = 1f,
-    val noiseLevelInMeters: Float = 0f,
-)

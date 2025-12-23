@@ -1,34 +1,25 @@
-package com.lainovic.tomtom.straycat.ui.route_builder
+package com.lainovic.tomtom.straycat.ui.simulation
 
 import android.content.Context
 import android.location.Location
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.lainovic.tomtom.straycat.BuildConfig
 import com.lainovic.tomtom.straycat.ui.showToast
+import com.tomtom.sdk.location.LocationProvider
 import com.tomtom.sdk.routing.RoutePlanner
-import com.tomtom.sdk.routing.online.OnlineRoutePlanner
 
 @Composable
-fun RouteBuilderScreen(
+fun SimulationScreen(
     context: Context,
-    onNavigateToPlayer: () -> Unit,
-    onLocationsUpdated: (List<Location>) -> Unit = { _ -> },
-    modifier: Modifier = Modifier
+    routePlanner: RoutePlanner,
+    locationProvider: LocationProvider,
+    modifier: Modifier
 ) {
-    val routePlanner: RoutePlanner = remember {
-        OnlineRoutePlanner.create(
-            context = context,
-            apiKey = BuildConfig.TOMTOM_API_KEY,
-        )
-    }
-
-    val viewModel: RouteBuilderViewModel = viewModel(
-        factory = RouteBuilderViewModel.Factory(routePlanner)
+    val viewModel: SimulationViewModel = viewModel(
+        factory = SimulationViewModel.Factory(routePlanner)
     )
 
     val origin by viewModel.origin
@@ -36,43 +27,40 @@ fun RouteBuilderScreen(
     val locations by viewModel.points
     val errorMessage by viewModel.errorMessage
 
-    RouteBuilderContent(
-        modifier = modifier,
+    SimulationContent(
+        context = context,
         origin = origin,
         destination = destination,
-        points = locations,
+        locations = locations,
+        locationProvider = locationProvider,
         onOriginSelected = { location, address ->
             viewModel.setOrigin(location)
-            showToast(context, "Origin set to: $address")
+            context.showToast("Origin set to: $address")
         },
         onDestinationSelected = { location, address ->
             viewModel.setDestination(location)
-            showToast(context, "Destination set to: $address")
+            context.showToast("Destination set to: $address")
         },
         onMapLongPress = { location ->
             when {
                 origin == null -> {
                     viewModel.setOrigin(location)
-                    showToast(context, "Origin set to: ${location.prettyFormat()}")
+                    context.showToast("Origin set to: ${location.prettyFormat()}")
                 }
 
                 destination == null -> {
                     viewModel.setDestination(location)
-                    showToast(context, "Destination set to: ${location.prettyFormat()}")
+                    context.showToast("Destination set to: ${location.prettyFormat()}")
                 }
 
                 else -> {
                     viewModel.clearRoute()
-                    showToast(context, "Route cleared")
+                    context.showToast("Route cleared")
                 }
             }
         },
-        onNavigateToSimulation = onNavigateToPlayer
+        modifier = modifier
     )
-
-    LaunchedEffect(locations) {
-        onLocationsUpdated(locations)
-    }
 
     ErrorEffect(errorMessage, context)
 }
@@ -84,7 +72,7 @@ private fun ErrorEffect(
 ) {
     LaunchedEffect(errorMessage) {
         errorMessage?.let {
-            showToast(context, "Error: $it")
+            context.showToast("Error: $it")
         }
     }
 }

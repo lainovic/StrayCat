@@ -1,26 +1,23 @@
 package com.lainovic.tomtom.straycat.application
 
 import android.content.Context
-import android.location.Location
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
 import com.google.android.libraries.places.api.Places
 import com.lainovic.tomtom.straycat.BuildConfig
-import com.lainovic.tomtom.straycat.ui.route_builder.RouteBuilderScreen
-import com.lainovic.tomtom.straycat.ui.route_player.RoutePlayerScreen
+import com.lainovic.tomtom.straycat.ui.rememberCustomLocationProvider
+import com.lainovic.tomtom.straycat.ui.simulation.SimulationScreen
+import com.tomtom.quantity.Distance
+import com.tomtom.sdk.routing.online.OnlineRoutePlanner
+import com.tomtom.sdk.location.LocationProviderConfig
+import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun StrayCatApp(context: Context) {
-    val navController = rememberNavController()
-    val locations = remember { mutableListOf<Location>() }
-
     if (!Places.isInitialized()) {
         Places.initializeWithNewPlacesApiEnabled(
             context,
@@ -28,34 +25,28 @@ fun StrayCatApp(context: Context) {
         )
     }
 
-    Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-        NavHost(
-            navController = navController,
-            startDestination = "route_builder",
-            modifier = Modifier.padding(innerPadding)
-        ) {
-            composable("route_builder") {
-                RouteBuilderScreen(
-                    context = context,
-                    onNavigateToPlayer = {
-                        navController.navigate("route_player")
-                    },
-                    onLocationsUpdated = { updatedLocations ->
-                        locations.clear()
-                        locations.addAll(updatedLocations)
-                    }
-                )
-            }
+    val routePlanner = remember {
+        OnlineRoutePlanner.create(
+            context = context,
+            apiKey = BuildConfig.TOMTOM_API_KEY,
+        )
+    }
 
-            composable("route_player") {
-                RoutePlayerScreen(
-                    context = context,
-                    locations = locations,
-                    onNavigateToBuilder = {
-                        navController.popBackStack()
-                    }
-                )
-            }
-        }
+    val locationProvider = rememberCustomLocationProvider(
+        context =  context,
+        locationProviderConfig = LocationProviderConfig(
+            minTimeInterval = 250L.milliseconds,
+            minDistance = Distance.meters(5.0)
+        )
+    )
+
+    Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+        SimulationScreen(
+            context = context,
+            routePlanner = routePlanner,
+            locationProvider = locationProvider,
+            modifier = Modifier
+                .padding(innerPadding)
+        )
     }
 }

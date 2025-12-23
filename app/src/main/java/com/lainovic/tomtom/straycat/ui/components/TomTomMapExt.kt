@@ -1,16 +1,23 @@
 package com.lainovic.tomtom.straycat.ui.components
 
+import android.content.Context
 import android.location.Location
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.fragment.app.FragmentManager
 import com.lainovic.tomtom.straycat.R
+import com.lainovic.tomtom.straycat.domain.service.CustomLocationProvider
 import com.lainovic.tomtom.straycat.shared.toGeoPoint
+import com.lainovic.tomtom.straycat.shared.toLocation
+import com.tomtom.sdk.map.display.location.LocationMarkerOptions
+import com.tomtom.quantity.Distance
+import com.tomtom.sdk.location.DefaultLocationProviderFactory
+import com.tomtom.sdk.location.LocationProviderConfig
+import com.tomtom.sdk.location.LocationProvider
 import com.tomtom.sdk.location.GeoPoint
 import com.tomtom.sdk.map.display.MapOptions
 import com.tomtom.sdk.map.display.TomTomMap
 import com.tomtom.sdk.map.display.camera.CameraOptions
-import com.tomtom.sdk.map.display.common.WidthByZoom
 import com.tomtom.sdk.map.display.image.ImageFactory
 import com.tomtom.sdk.map.display.marker.Marker
 import com.tomtom.sdk.map.display.marker.MarkerOptions
@@ -18,6 +25,7 @@ import com.tomtom.sdk.map.display.polyline.Polyline
 import com.tomtom.sdk.map.display.polyline.PolylineOptions
 import com.tomtom.sdk.map.display.ui.MapFragment
 import kotlin.time.Duration.Companion.milliseconds
+
 
 internal fun TomTomMap.updateMarker(
     existingMarker: Marker?,
@@ -90,23 +98,9 @@ internal fun TomTomMap.animateToBounds(
     val centerLat = (minLat + maxLat) / 2
     val centerLon = (minLon + maxLon) / 2
 
-    val latDiff = maxLat - minLat
-    val lonDiff = maxLon - minLon
-    val maxDiff = maxOf(latDiff, lonDiff)
-
-    val zoom = when {
-        maxDiff > 10 -> 4.0
-        maxDiff > 5 -> 6.0
-        maxDiff > 1 -> 8.0
-        maxDiff > 0.5 -> 10.0
-        maxDiff > 0.1 -> 12.0
-        else -> 14.0
-    }
-
     animateCamera(
         CameraOptions(
             position = GeoPoint(latitude = centerLat, longitude = centerLon),
-            zoom = zoom,
         ),
         animationDuration = duration.milliseconds,
     )
@@ -123,4 +117,28 @@ internal fun createTomTomMapFragment(
         .add(newFragment, "map_fragment")
         .commitNow()
     onFragmentReady(newFragment)
+}
+
+internal fun TomTomMap.initialize(
+    context: Context,
+    locationProvider: LocationProvider,
+    onMapLongPress: (Location) -> Unit,
+) {
+    val cameraOptions = CameraOptions(
+        position = GeoPoint(latitude = 44.7866, longitude = 20.4489),
+        zoom = 2.0,
+    )
+
+    animateCamera(cameraOptions, animationDuration = 1000.milliseconds)
+    addMapLongClickListener { point: GeoPoint ->
+        onMapLongPress(point.toLocation())
+        true
+    }
+
+    setLocationProvider(locationProvider)
+    locationProvider.enable()
+
+    enableLocationMarker(
+        LocationMarkerOptions(type = LocationMarkerOptions.Type.Chevron)
+    )
 }

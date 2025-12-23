@@ -18,20 +18,13 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.lainovic.tomtom.straycat.BuildConfig
-import com.lainovic.tomtom.straycat.shared.toLocation
-import com.tomtom.quantity.Distance
-import com.tomtom.sdk.location.DefaultLocationProviderFactory
-import com.tomtom.sdk.location.GeoPoint
-import com.tomtom.sdk.location.LocationProviderConfig
-import com.tomtom.sdk.map.display.location.LocationMarkerOptions
+import com.tomtom.sdk.location.LocationProvider
 import com.tomtom.sdk.map.display.MapOptions
 import com.tomtom.sdk.map.display.TomTomMap
 import com.tomtom.sdk.map.display.annotation.AlphaInitialCameraOptionsApi
-import com.tomtom.sdk.map.display.camera.CameraOptions
 import com.tomtom.sdk.map.display.marker.Marker
 import com.tomtom.sdk.map.display.polyline.Polyline
 import com.tomtom.sdk.map.display.ui.MapFragment
-import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(
     AlphaInitialCameraOptionsApi::class,
@@ -41,6 +34,7 @@ fun MapView(
     modifier: Modifier = Modifier,
     origin: Location? = null,
     destination: Location? = null,
+    locationProvider: LocationProvider,
     points: List<Location> = emptyList(),
     onMapLongPress: (Location) -> Unit = { _ -> },
 ) {
@@ -51,23 +45,13 @@ fun MapView(
     var tomtomMap by remember { mutableStateOf<TomTomMap?>(null) }
     var originMarker by remember { mutableStateOf<Marker?>(null) }
     var destinationMarker by remember { mutableStateOf<Marker?>(null) }
-    var routePolyline by remember { mutableStateOf<Polyline?>(null) }
+    var polyline by remember { mutableStateOf<Polyline?>(null) }
 
     var mapFragment by remember { mutableStateOf<MapFragment?>(null) }
 
     val mapOptions = remember {
         MapOptions(mapKey = BuildConfig.TOMTOM_API_KEY)
     }
-
-    val locationProviderConfig = LocationProviderConfig(
-        minTimeInterval = 250L.milliseconds,
-        minDistance = Distance.meters(5.0)
-    )
-
-    val defaultLocationProvider = DefaultLocationProviderFactory.create(
-        context = context,
-        config = locationProviderConfig
-    )
 
     mapFragment?.let { fragment ->
         AndroidView(
@@ -127,13 +111,13 @@ fun MapView(
     LaunchedEffect(tomtomMap, points) {
         val map = tomtomMap ?: return@LaunchedEffect
         if (points.isEmpty()) {
-            routePolyline?.remove()
-            routePolyline = null
+            polyline?.remove()
+            polyline = null
             return@LaunchedEffect
         }
 
-        routePolyline = map.updatePolyline(
-            routePolyline,
+        polyline = map.updatePolyline(
+            polyline,
             points,
         )
     }
@@ -145,23 +129,11 @@ fun MapView(
     }
 
     LaunchedEffect(tomtomMap) {
-        tomtomMap?.let { map ->
-            val cameraOptions = CameraOptions(
-                position = GeoPoint(latitude = 44.7866, longitude = 20.4489),
-                zoom = 2.0,
-            )
-            map.animateCamera(cameraOptions, animationDuration = 1000.milliseconds)
-            map.addMapLongClickListener { point ->
-                onMapLongPress(point.toLocation())
-                true
-            }
-
-            map.setLocationProvider(defaultLocationProvider)
-            defaultLocationProvider.enable()
-            map.enableLocationMarker(
-                LocationMarkerOptions(type = LocationMarkerOptions.Type.Chevron)
-            )
-        }
+        tomtomMap?.initialize(
+            context = context,
+            locationProvider = locationProvider,
+            onMapLongPress = onMapLongPress,
+        )
     }
 
     DisposableEffect(lifecycleOwner) {
@@ -190,9 +162,16 @@ fun MapView(
 
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
-            fragmentManager.beginTransaction()
-                .remove(mapFragment!!)
-                .commitNow()
+            mapFragment?.let {
+                fragmentManager.beginTransaction()
+                    .remove(it)
+                    .commitNow()
+            }
+            tomtomMap = null
+            mapFragment = null
+            originMarker = null
+            destinationMarker = null
+            polyline = null
         }
     }
 }

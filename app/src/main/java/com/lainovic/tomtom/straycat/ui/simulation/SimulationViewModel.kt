@@ -1,4 +1,4 @@
-package com.lainovic.tomtom.straycat.ui.route_builder
+package com.lainovic.tomtom.straycat.ui.simulation
 
 import android.location.Location
 import androidx.compose.runtime.State
@@ -10,7 +10,7 @@ import com.lainovic.tomtom.straycat.infrastructure.shared.planRoute
 import com.tomtom.sdk.routing.RoutePlanner
 import kotlinx.coroutines.launch
 
-class RouteBuilderViewModel(
+class SimulationViewModel(
     private val routePlanner: RoutePlanner
 ) : ViewModel() {
 
@@ -62,7 +62,7 @@ class RouteBuilderViewModel(
             object : ViewModelProvider.Factory {
                 @Suppress("UNCHECKED_CAST")
                 override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                    return RouteBuilderViewModel(routePlanner) as T
+                    return SimulationViewModel(routePlanner) as T
                 }
             }
     }

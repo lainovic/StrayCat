@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.StateFlow
  * 3. StateFlow is already designed to be shared and doesn't leak Context
  */
 object LocationServiceStateProvider {
-    private val TAG = LocationServiceStateProvider::class
+    private val TAG = LocationServiceStateProvider::class.simpleName
 
     private val _state = MutableStateFlow<LocationServiceState>(LocationServiceState.Idle)
     val state: StateFlow<LocationServiceState> = _state
@@ -24,7 +24,7 @@ object LocationServiceStateProvider {
      * This is the only way to modify state - it's write-protected.
      */
     fun updateState(newState: LocationServiceState) {
-        Log.d(TAG.simpleName, "State updated: ${_state.value} -> $newState")
+        Log.d(TAG, "State updated: ${_state.value} -> $newState")
         _state.value = newState
     }
 }

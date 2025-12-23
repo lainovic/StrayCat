@@ -1,4 +1,4 @@
-package com.lainovic.tomtom.straycat.ui.route_player
+package com.lainovic.tomtom.straycat.ui.player
 
 import android.location.Location
 import android.util.Log
@@ -9,106 +9,125 @@ import com.lainovic.tomtom.straycat.domain.service.LocationDataSource
 import com.lainovic.tomtom.straycat.domain.service.LocationPlayerServiceFacade
 import com.lainovic.tomtom.straycat.domain.service.LocationServiceState
 import com.lainovic.tomtom.straycat.domain.service.LocationServiceStateProvider
+import com.lainovic.tomtom.straycat.ui.components.PlayerButtonState
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
-internal class RoutePlayerViewModel(
+internal class LocationPlayerViewModel(
     private val service: LocationPlayerServiceFacade,
 ) : ViewModel() {
     val state: StateFlow<LocationServiceState> = LocationServiceStateProvider.state
 
-    val startStopButtonText: StateFlow<String> = state.map { currentState ->
+    val startStopButtonState: StateFlow<PlayerButtonState> = state.map { currentState ->
         when (currentState) {
-            LocationServiceState.Idle, LocationServiceState.Stopped -> "Start"
-            LocationServiceState.Running, LocationServiceState.Paused -> "Stop"
-            is LocationServiceState.Error -> "Retry"
+            LocationServiceState.Idle, LocationServiceState.Stopped -> PlayerButtonState.Start
+            LocationServiceState.Running, LocationServiceState.Paused -> PlayerButtonState.Stop
+            is LocationServiceState.Error -> PlayerButtonState.Retry
         }
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
-        initialValue = "Start"
+        initialValue = PlayerButtonState.Start
     )
 
-    val pauseResumeButtonText: StateFlow<String> = state.map { currentState ->
+    val pauseResumeButtonState: StateFlow<PlayerButtonState> = state.map { currentState ->
         when (currentState) {
-            LocationServiceState.Running -> "Pause"
-            LocationServiceState.Paused -> "Resume"
-            is LocationServiceState.Error -> "Error"
-            else -> "Pause/Resume"
+            LocationServiceState.Running -> PlayerButtonState.Pause
+            LocationServiceState.Paused -> PlayerButtonState.Resume
+            is LocationServiceState.Error -> PlayerButtonState.Retry
+            else -> PlayerButtonState.Pause
         }
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
-        initialValue = "Pause/Resume"
+        initialValue = PlayerButtonState.Pause,
     )
 
     init {
-        Log.d(TAG.simpleName, "LocationPlayerViewModel created")
+        Log.d(TAG, "LocationPlayerViewModel created")
     }
 
-    fun startStop(locations: List<Location>) {
+    fun start(locations: List<Location>) {
         if (locations.isEmpty()) {
-            Log.d(TAG.simpleName, "startStop() called with empty locations list, aborting")
+            Log.d(
+                TAG,
+                "start() called with empty locations list, aborting"
+            )
             return
         }
 
-        Log.d(TAG.simpleName, "startStop() called, current state: ${state.value}")
         when (state.value) {
             LocationServiceState.Idle,
             LocationServiceState.Stopped,
             is LocationServiceState.Error -> {
-                Log.d(TAG.simpleName, "Starting service")
                 LocationDataSource.update(locations)
                 service.start()
+                Log.i(TAG, "start() completed")
             }
 
             LocationServiceState.Running,
             LocationServiceState.Paused -> {
-                Log.d(TAG.simpleName, "Stopping service")
-                service.stop()
-                LocationDataSource.clear()
+                Log.d(TAG, "Service already running or paused, start() call ignored")
+                return
             }
         }
-        Log.d(TAG.simpleName, "startStop() completed")
+    }
+
+    fun stop() {
+        when (state.value) {
+            LocationServiceState.Running,
+            LocationServiceState.Paused -> {
+                service.stop()
+                LocationDataSource.clear()
+                Log.i(TAG, "stop() completed")
+            }
+
+            LocationServiceState.Idle,
+            LocationServiceState.Stopped,
+            is LocationServiceState.Error -> {
+                Log.d(TAG, "Service already stopped or in error state, stop() call ignored")
+                return
+            }
+        }
     }
 
     fun pauseResume() {
-        Log.d(TAG.simpleName, "pauseResume() called, current state: ${state.value}")
+        Log.d(TAG, "pauseResume() called, current state: ${state.value}")
         when (state.value) {
             LocationServiceState.Running -> {
-                Log.d(TAG.simpleName, "Pausing service")
+                Log.d(TAG, "Pausing service")
                 service.pause()
             }
 
             LocationServiceState.Paused -> {
-                Log.d(TAG.simpleName, "Resuming service")
+                Log.d(TAG, "Resuming service")
                 service.resume()
             }
 
             else -> {
-                Log.d(TAG.simpleName, "pauseResumeSimulation called in invalid state: ${state.value}")
+                Log.d(TAG, "pauseResumeSimulation called in invalid state: ${state.value}")
             }
         }
-        Log.d(TAG.simpleName, "pauseResume() completed")
+        Log.d(TAG, "pauseResume() completed")
     }
 
     override fun onCleared() {
-        Log.d(TAG.simpleName, "onCleared() called")
+        Log.d(TAG, "onCleared() called")
         super.onCleared()
         // No cleanup needed - facade just observes singleton state
-        Log.d(TAG.simpleName, "onCleared() completed")
+        Log.d(TAG, "onCleared() completed")
     }
 
     companion object {
-        val TAG = RoutePlayerViewModel::class
+        val TAG = LocationPlayerViewModel::class.simpleName
 
         fun Factory(service: LocationPlayerServiceFacade): ViewModelProvider.Factory {
             return object : ViewModelProvider.Factory {
                 @Suppress("UNCHECKED_CAST")
                 override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                    return RoutePlayerViewModel(service) as T
+                    return LocationPlayerViewModel(service) as T
                 }
             }
         }
