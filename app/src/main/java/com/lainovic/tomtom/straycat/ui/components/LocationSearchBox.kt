@@ -1,7 +1,6 @@
 package com.lainovic.tomtom.straycat.ui.components
 
 import android.location.Location
-import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,6 +15,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -29,7 +29,19 @@ import com.google.android.libraries.places.api.model.Place
 import com.google.android.libraries.places.api.net.FetchPlaceRequest
 import com.google.android.libraries.places.api.net.FindAutocompletePredictionsRequest
 import com.google.android.libraries.places.api.net.PlacesClient
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlin.time.Duration.Companion.milliseconds
 
+@OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 @Composable
 fun LocationSearchBox(
     modifier: Modifier = Modifier,
@@ -39,29 +51,36 @@ fun LocationSearchBox(
     val context = LocalContext.current
     val placesClient = remember { Places.createClient(context) }
 
-    var searchQuery by remember { mutableStateOf("") }
-    var predictions by remember { mutableStateOf<List<AutocompletePrediction>>(emptyList()) }
+    val searchQuery = remember { MutableStateFlow("") }
+    var searchQueryText by remember { mutableStateOf("") }
+    var predictions
+            by remember {
+                mutableStateOf<List<AutocompletePrediction>>(emptyList())
+            }
 
     Column(
         modifier = modifier
             .padding(8.dp)
     ) {
         OutlinedTextField(
-            value = searchQuery,
+            value = searchQueryText,
             onValueChange = { query ->
-                searchQuery = query
-                placesClient.findAutocompletePredictions(searchQuery) {
-                    predictions = it
-                    Log.d("LocationSearchBox", "Predictions: $it")
-                }
+                searchQueryText = query
+                searchQuery.value = query
             },
             modifier = Modifier.fillMaxWidth(),
             placeholder = { Text(text = placeholderText) },
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
             trailingIcon = {
-                if (searchQuery.isNotEmpty()) {
-                    IconButton(onClick = { searchQuery = "" }) {
-                        Icon(Icons.Default.Close, contentDescription = "Clear Search")
+                if (searchQueryText.isNotEmpty()) {
+                    IconButton(onClick = {
+                        searchQueryText = ""
+                        searchQuery.value = ""
+                    }) {
+                        Icon(
+                            Icons.Default.Close,
+                            contentDescription = "Clear Search"
+                        )
                     }
                 }
             }
@@ -86,20 +105,38 @@ fun LocationSearchBox(
                                 .addOnSuccessListener { res ->
                                     val place = res.place
                                     val location = place.location
+                                    val name = place.displayName ?: ""
                                     if (location != null) {
                                         val location = Location("").apply {
                                             latitude = location.latitude
                                             longitude = location.longitude
                                         }
-                                        onLocationSelected(location, place.displayName ?: "")
+                                        onLocationSelected(location, name)
                                         predictions = emptyList()
-                                        searchQuery = place.displayName ?: ""
+                                        searchQueryText = name
+                                        searchQuery.value = name
                                     }
                                 }
                         }
                 )
             }
         }
+    }
+
+    LaunchedEffect(Unit) {
+        searchQuery
+            .debounce(300.milliseconds)
+            .filter { it.length >= 3 }
+            .distinctUntilChanged()
+            .flatMapLatest { query ->
+                flow {
+                    emit(placesClient.searchPredictions(query))
+                }
+                    .catch { emit(emptyList()) }
+            }
+            .collect { results ->
+                predictions = results
+            }
     }
 }
 
@@ -117,3 +154,12 @@ private fun PlacesClient.findAutocompletePredictions(
         }
 }
 
+private suspend fun PlacesClient.searchPredictions(
+    query: String
+): List<AutocompletePrediction> {
+    return suspendCancellableCoroutine { continuation ->
+        findAutocompletePredictions(query) { predictions ->
+            continuation.resume(predictions) {}
+        }
+    }
+}

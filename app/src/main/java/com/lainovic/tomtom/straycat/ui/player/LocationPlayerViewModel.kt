@@ -8,7 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.lainovic.tomtom.straycat.domain.service.LocationDataSource
 import com.lainovic.tomtom.straycat.domain.service.LocationPlayerServiceFacade
 import com.lainovic.tomtom.straycat.domain.service.LocationServiceState
-import com.lainovic.tomtom.straycat.domain.service.LocationServiceStateProvider
+import com.lainovic.tomtom.straycat.domain.service.LocationPlayerServiceStateProvider
 import com.lainovic.tomtom.straycat.ui.components.PlayerButtonState
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -18,12 +18,14 @@ import kotlinx.coroutines.flow.stateIn
 internal class LocationPlayerViewModel(
     private val service: LocationPlayerServiceFacade,
 ) : ViewModel() {
-    val state: StateFlow<LocationServiceState> = LocationServiceStateProvider.state
+    val state: StateFlow<LocationServiceState> = LocationPlayerServiceStateProvider.state
 
     val startStopButtonState: StateFlow<PlayerButtonState> = state.map { currentState ->
         when (currentState) {
-            LocationServiceState.Idle, LocationServiceState.Stopped -> PlayerButtonState.Start
-            LocationServiceState.Running, LocationServiceState.Paused -> PlayerButtonState.Stop
+            LocationServiceState.Idle,
+            LocationServiceState.Stopped -> PlayerButtonState.Start
+            is LocationServiceState.Running,
+            is LocationServiceState.Paused -> PlayerButtonState.Stop
             is LocationServiceState.Error -> PlayerButtonState.Retry
         }
     }.stateIn(
@@ -34,8 +36,8 @@ internal class LocationPlayerViewModel(
 
     val pauseResumeButtonState: StateFlow<PlayerButtonState> = state.map { currentState ->
         when (currentState) {
-            LocationServiceState.Running -> PlayerButtonState.Pause
-            LocationServiceState.Paused -> PlayerButtonState.Resume
+            is LocationServiceState.Running -> PlayerButtonState.Pause
+            is LocationServiceState.Paused -> PlayerButtonState.Resume
             is LocationServiceState.Error -> PlayerButtonState.Retry
             else -> PlayerButtonState.Pause
         }
@@ -45,16 +47,25 @@ internal class LocationPlayerViewModel(
         initialValue = PlayerButtonState.Pause,
     )
 
+    val progress: StateFlow<Float> = state.map { currentState ->
+        when (currentState) {
+            is LocationServiceState.Running -> currentState.progress
+            is LocationServiceState.Paused -> currentState.progress
+            else -> 0f
+        }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = 0f
+    )
+
     init {
         Log.d(TAG, "LocationPlayerViewModel created")
     }
 
     fun start(locations: List<Location>) {
         if (locations.isEmpty()) {
-            Log.d(
-                TAG,
-                "start() called with empty locations list, aborting"
-            )
+            Log.d(TAG, "start() called with empty locations list, aborting")
             return
         }
 
@@ -67,8 +78,8 @@ internal class LocationPlayerViewModel(
                 Log.i(TAG, "start() completed")
             }
 
-            LocationServiceState.Running,
-            LocationServiceState.Paused -> {
+            is LocationServiceState.Running,
+            is LocationServiceState.Paused -> {
                 Log.d(TAG, "Service already running or paused, start() call ignored")
                 return
             }
@@ -77,8 +88,8 @@ internal class LocationPlayerViewModel(
 
     fun stop() {
         when (state.value) {
-            LocationServiceState.Running,
-            LocationServiceState.Paused -> {
+            is LocationServiceState.Running,
+            is LocationServiceState.Paused -> {
                 service.stop()
                 LocationDataSource.clear()
                 Log.i(TAG, "stop() completed")
@@ -96,12 +107,12 @@ internal class LocationPlayerViewModel(
     fun pauseResume() {
         Log.d(TAG, "pauseResume() called, current state: ${state.value}")
         when (state.value) {
-            LocationServiceState.Running -> {
+            is LocationServiceState.Running -> {
                 Log.d(TAG, "Pausing service")
                 service.pause()
             }
 
-            LocationServiceState.Paused -> {
+            is LocationServiceState.Paused -> {
                 Log.d(TAG, "Resuming service")
                 service.resume()
             }
@@ -116,7 +127,6 @@ internal class LocationPlayerViewModel(
     override fun onCleared() {
         Log.d(TAG, "onCleared() called")
         super.onCleared()
-        // No cleanup needed - facade just observes singleton state
         Log.d(TAG, "onCleared() completed")
     }
 

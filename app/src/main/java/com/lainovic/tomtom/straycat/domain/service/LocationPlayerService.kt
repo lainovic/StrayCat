@@ -16,8 +16,12 @@ import android.os.IBinder
 import android.util.Log
 import com.lainovic.tomtom.straycat.R
 import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 
 class LocationPlayerService : Service() {
     val locationManager: LocationManager by lazy {
@@ -28,6 +32,12 @@ class LocationPlayerService : Service() {
             getSystemService(LOCATION_SERVICE) as LocationManager
         }
     }
+
+    private val backgroundScope = CoroutineScope(
+        Dispatchers.Default.limitedParallelism(1) +
+                CoroutineName("LocationPlayerServiceScope")
+    )
+    private var progressJob: Job? = null
 
     private val simulator by lazy {
         val handler = CoroutineExceptionHandler { _, throwable ->
@@ -128,35 +138,32 @@ class LocationPlayerService : Service() {
                 ACTION_START -> {
                     Log.d(TAG, "ACTION_START: Starting simulation")
                     simulator.start()
-                    Log.d(TAG, "ACTION_START: Simulator.start() called")
-                    broadcastState(LocationServiceState.Running)
-                    Log.d(TAG, "ACTION_START: Broadcast sent")
+                    startBroadcastingProgress()
+                    Log.i(TAG, "ACTION_START: Simulation started")
                 }
 
                 ACTION_PAUSE -> {
                     Log.d(TAG, "ACTION_PAUSE: Pausing simulation")
                     simulator.pause()
-                    Log.d(TAG, "ACTION_PAUSE: Simulator.pause() called")
-                    broadcastState(LocationServiceState.Paused)
-                    Log.d(TAG, "ACTION_PAUSE: Broadcast sent")
+                    stopBroadcastingProgress()
+                    broadcastState(LocationServiceState.Paused(simulator.progress.value))
+                    Log.i(TAG, "ACTION_PAUSE: Simulation paused")
                 }
 
                 ACTION_RESUME -> {
                     Log.d(TAG, "ACTION_RESUME: Resuming simulation")
                     simulator.resume()
-                    Log.d(TAG, "ACTION_RESUME: Simulator.resume() called")
-                    broadcastState(LocationServiceState.Running)
-                    Log.d(TAG, "ACTION_RESUME: Broadcast sent")
+                    startBroadcastingProgress()
+                    Log.i(TAG, "ACTION_RESUME: Simulation resumed")
                 }
 
                 ACTION_STOP -> {
                     Log.d(TAG, "ACTION_STOP: Stopping simulation")
                     simulator.stop()
-                    Log.d(TAG, "ACTION_STOP: Simulator.stop() called")
+                    stopBroadcastingProgress()
                     broadcastState(LocationServiceState.Stopped)
-                    Log.d(TAG, "ACTION_STOP: Broadcast sent, calling stopSelf()")
                     stopSelf()
-                    Log.d(TAG, "ACTION_STOP: stopSelf() called")
+                    Log.i(TAG, "ACTION_STOP: Simulation stopped")
                 }
             }
         } catch (e: Exception) {
@@ -167,6 +174,19 @@ class LocationPlayerService : Service() {
 
         Log.d(TAG, "onStartCommand() returning START_STICKY")
         return START_STICKY
+    }
+
+    private fun startBroadcastingProgress() {
+        progressJob =
+            simulator.progress
+                .onEach {
+                    broadcastState(LocationServiceState.Running(it))
+                }.launchIn(backgroundScope)
+    }
+
+    private fun stopBroadcastingProgress() {
+        progressJob?.cancel()
+        progressJob = null
     }
 
     override fun onDestroy() {
@@ -228,7 +248,7 @@ class LocationPlayerService : Service() {
     }
 
     private fun broadcastState(state: LocationServiceState) {
-        LocationServiceStateProvider.updateState(state)
+        LocationPlayerServiceStateProvider.updateState(state)
     }
 
     companion object {

@@ -116,10 +116,12 @@ fun MapView(
             return@LaunchedEffect
         }
 
-        polyline = map.updatePolyline(
-            polyline,
-            points,
-        )
+        if (points.size >= 2) {
+            polyline = map.updatePolyline(
+                polyline,
+                points,
+            )
+        }
     }
 
     LaunchedEffect(mapFragment) {

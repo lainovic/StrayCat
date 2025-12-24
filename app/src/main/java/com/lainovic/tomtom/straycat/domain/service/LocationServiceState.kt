@@ -2,8 +2,8 @@ package com.lainovic.tomtom.straycat.domain.service
 
 sealed class LocationServiceState {
     object Idle : LocationServiceState()
-    object Running : LocationServiceState()
-    object Paused : LocationServiceState()
+    data class Running(val progress: Float = 0f) : LocationServiceState()
+    data class Paused(val progress: Float = 0f) : LocationServiceState()
     object Stopped : LocationServiceState()
     data class Error(val message: String) : LocationServiceState()
 

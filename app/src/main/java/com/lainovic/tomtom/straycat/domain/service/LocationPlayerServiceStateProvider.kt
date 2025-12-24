@@ -13,8 +13,8 @@ import kotlinx.coroutines.flow.StateFlow
  * 2. Multiple components may need to observe the same state
  * 3. StateFlow is already designed to be shared and doesn't leak Context
  */
-object LocationServiceStateProvider {
-    private val TAG = LocationServiceStateProvider::class.simpleName
+object LocationPlayerServiceStateProvider {
+    private val TAG = LocationPlayerServiceStateProvider::class.simpleName
 
     private val _state = MutableStateFlow<LocationServiceState>(LocationServiceState.Idle)
     val state: StateFlow<LocationServiceState> = _state

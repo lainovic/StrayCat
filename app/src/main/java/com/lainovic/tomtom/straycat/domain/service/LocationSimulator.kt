@@ -4,17 +4,26 @@ import android.location.Location
 import android.os.SystemClock
 import android.util.Log
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapConcat
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.retry
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.withContext
 import kotlin.coroutines.cancellation.CancellationException
 
 internal class LocationSimulator(
@@ -26,6 +35,9 @@ internal class LocationSimulator(
 ) {
     private val isPaused = MutableStateFlow(false)
     private var collectionJob: Job? = null
+
+    private val _progress = MutableStateFlow(0f)
+    val progress: StateFlow<Float> = _progress
 
     fun start() {
         Log.d(TAG, "start() called, collectionJob=${collectionJob}")
@@ -45,17 +57,19 @@ internal class LocationSimulator(
     }
 
     private suspend fun runSimulation() {
-        val snapshot = LocationDataSource.locations.value.map { Location(it) }
-        snapshot
-            .toFlow()
-            .collectLocations()
-    }
-
-    private fun List<Location>.toFlow(): Flow<Location> = flow {
-        for (location in this@toFlow) {
-            emit(location)
+        supervisorScope {
+            val snapshot = LocationDataSource.locations.value.map { Location(it) }
+            snapshot
+                .toFlow()
+                .collectLocations()
         }
     }
+
+    private fun List<Location>.toFlow(): Flow<IndexedValue<Location>> = flow {
+        this@toFlow.forEachIndexed { idx, location ->
+            emit(IndexedValue(idx, location))
+        }
+    }.buffer(capacity = Channel.RENDEZVOUS)
 
     private fun postProcess(location: Location): Location {
         val processedLocation = Location(location)
@@ -65,16 +79,31 @@ internal class LocationSimulator(
                 accuracy = 10f // good enough for simulation
             }
 
-        // TODO apply speed multiplier i
-        // if (configuration.speedMultiplier != 1f) {}
-
         return processedLocation
     }
 
-    private suspend fun Flow<Location>.collectLocations() =
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private suspend fun Flow<IndexedValue<Location>>.collectLocations() =
         this
-            .onEach { delayOrWaitUntilResumed() }
-            .map { postProcess(it) }
+            .retry(retries = 3) { cause ->
+                delay(1000)
+                Log.w(TAG, "Retrying after error", cause)
+                true
+            }
+            .onEach { (idx, _) ->
+                _progress.value = (idx + 1f) / LocationDataSource.locations.value.size
+                delayOrWaitUntilResumed()
+            }
+            .map { it.value }
+//            .map { postProcess(it) }
+            .flatMapConcat { location ->
+                flow {
+                    val processed = withContext(Dispatchers.Default) {
+                        postProcess(location)
+                    }
+                    emit(processed)
+                }
+            }
             .catch { e ->
                 Log.e(TAG, "Error while collecting flow", e)
                 onError(e)
