@@ -43,7 +43,7 @@ import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 @Composable
-fun LocationSearchBox(
+fun SearchField(
     modifier: Modifier = Modifier,
     placeholderText: String = "Search Location",
     onLocationSelected: (Location, String) -> Unit = { _, _ -> },

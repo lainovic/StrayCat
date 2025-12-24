@@ -1,19 +1,21 @@
-package com.lainovic.tomtom.straycat.ui.player
+package com.lainovic.tomtom.straycat.ui.simulation
 
 import android.location.Location
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -22,15 +24,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.lainovic.tomtom.straycat.ui.components.PlayerButtonState
+import com.lainovic.tomtom.straycat.ui.player.LocationPlayerViewModel
 import com.lainovic.tomtom.straycat.ui.showToast
 import com.lainovic.tomtom.straycat.ui.toIconAndText
 
 @Composable
-internal fun PlayerControls(
+internal fun SimulationControls(
     viewModel: LocationPlayerViewModel,
     locations: List<Location>,
     modifier: Modifier = Modifier
@@ -97,40 +101,45 @@ private fun PlayerButtons(
         LinearProgressIndicator(
             progress = { progress },
             color = Color(0xFF0066FF),
+            modifier = Modifier
+                .height(8.dp)
+                .clip(RoundedCornerShape(4.dp))
         )
+
         Column(
             horizontalAlignment = Alignment.End,
         ) {
             Row(
-                verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Button(
+                IconButton(
                     onClick = onPauseResumePlayer,
-                    elevation = ButtonDefaults.buttonElevation(
-                        defaultElevation = 6.dp,
-                        pressedElevation = 8.dp
-                    ),
-//                colors = ButtonDefaults.buttonColors(
-//                    contentColor = buttonColor
-//                )
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(MaterialTheme.colorScheme.secondaryContainer)
                 ) {
                     val (icon, text) = pauseResumeButtonState.toIconAndText()
                     Icon(
-                        imageVector = icon, contentDescription = text,
+                        imageVector = icon,
+                        contentDescription = text,
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
                         modifier = Modifier.size(32.dp)
                     )
                 }
-                Button(
+                IconButton(
                     onClick = onStopPlayer,
-                    elevation = ButtonDefaults.buttonElevation(
-                        defaultElevation = 6.dp,
-                        pressedElevation = 8.dp
-                    ),
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(MaterialTheme.colorScheme.secondaryContainer)
                 ) {
                     val (icon, text) = startStopButtonState.toIconAndText()
                     Icon(
-                        imageVector = icon, contentDescription = text,
+                        imageVector = icon,
+                        contentDescription = text,
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
                         modifier = Modifier.size(32.dp)
                     )
                 }
@@ -144,18 +153,17 @@ private fun PlayButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Button(
+    IconButton(
         onClick = onClick,
-        shape = CircleShape,
-        elevation = ButtonDefaults.buttonElevation(
-            defaultElevation = 6.dp,
-            pressedElevation = 8.dp
-        ),
         modifier = modifier
+            .size(48.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.secondaryContainer)
     ) {
         Icon(
             imageVector = Icons.Default.PlayArrow,
             contentDescription = "Play",
+            tint = MaterialTheme.colorScheme.onPrimaryContainer,
             modifier = Modifier.size(32.dp)
         )
     }

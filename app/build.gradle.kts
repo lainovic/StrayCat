@@ -1,4 +1,4 @@
-import org.apache.tools.ant.property.LocalProperties
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
@@ -17,10 +17,16 @@ android {
         versionCode = 1
         versionName = "1.0"
 
-        val tomtomApiKey = project.property("tomtomApiKey") ?: ""
+        val localProperties = Properties()
+        val localPropertiesFile = rootProject.file("local.properties")
+        if (localPropertiesFile.exists()) {
+            localPropertiesFile.inputStream().use { localProperties.load(it) }
+        }
+
+        val tomtomApiKey = localProperties.getProperty("tomtomApiKey") ?: ""
         buildConfigField("String", "TOMTOM_API_KEY", "\"${tomtomApiKey}\"")
 
-        val googlePlacesApiKey = project.property("googlePlacesApiKey") ?: ""
+        val googlePlacesApiKey = localProperties.getProperty("googlePlacesApiKey") ?: ""
         buildConfigField("String", "GOOGLE_PLACES_API_KEY", "\"${googlePlacesApiKey}\"")
         
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"

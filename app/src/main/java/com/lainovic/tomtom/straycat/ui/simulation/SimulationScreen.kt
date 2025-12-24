@@ -30,6 +30,7 @@ fun SimulationScreen(
     val destination by viewModel.destination
     val locations by viewModel.points
     val errorMessage by viewModel.errorMessage
+    val errorEvents = viewModel.errorEvents
 
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -73,7 +74,7 @@ fun SimulationScreen(
     ErrorEffect(errorMessage, context)
 
     LaunchedEffect(Unit) {
-        viewModel.errorEvents.collect { message ->
+        errorEvents.collect { message ->
             snackbarHostState.showSnackbar(
                 message = message,
                 duration = SnackbarDuration.Short

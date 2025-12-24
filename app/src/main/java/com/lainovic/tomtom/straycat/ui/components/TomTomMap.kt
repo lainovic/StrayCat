@@ -17,9 +17,8 @@ import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import com.lainovic.tomtom.straycat.BuildConfig
+import com.lainovic.tomtom.straycat.ui.rememberMapOptions
 import com.tomtom.sdk.location.LocationProvider
-import com.tomtom.sdk.map.display.MapOptions
 import com.tomtom.sdk.map.display.TomTomMap
 import com.tomtom.sdk.map.display.annotation.AlphaInitialCameraOptionsApi
 import com.tomtom.sdk.map.display.marker.Marker
@@ -30,7 +29,7 @@ import com.tomtom.sdk.map.display.ui.MapFragment
     AlphaInitialCameraOptionsApi::class,
 )
 @Composable
-fun MapView(
+fun TomTomMap(
     modifier: Modifier = Modifier,
     origin: Location? = null,
     destination: Location? = null,
@@ -49,9 +48,7 @@ fun MapView(
 
     var mapFragment by remember { mutableStateOf<MapFragment?>(null) }
 
-    val mapOptions = remember {
-        MapOptions(mapKey = BuildConfig.TOMTOM_API_KEY)
-    }
+    val mapOptions = rememberMapOptions()
 
     mapFragment?.let { fragment ->
         AndroidView(

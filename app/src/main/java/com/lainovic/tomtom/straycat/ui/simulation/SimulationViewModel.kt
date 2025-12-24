@@ -20,9 +20,6 @@ class SimulationViewModel(
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
-//    private val _animatedPoints = MutableStateFlow<List<Location>>(emptyList())
-//    val animatedPoints: StateFlow<List<Location>> = _animatedPoints
-
     private val _errorEvents = MutableSharedFlow<String>()
     val errorEvents: SharedFlow<String> = _errorEvents
 

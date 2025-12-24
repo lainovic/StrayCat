@@ -13,7 +13,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lainovic.tomtom.straycat.domain.service.LocationPlayerService
 import com.lainovic.tomtom.straycat.domain.service.LocationPlayerServiceFacade
 import com.lainovic.tomtom.straycat.ui.player.LocationPlayerViewModel
-import com.lainovic.tomtom.straycat.ui.player.PlayerControls
 import com.tomtom.sdk.location.LocationProvider
 
 @Composable
@@ -37,8 +36,9 @@ internal fun SimulationContent(
         factory = LocationPlayerViewModel.Factory(service)
     )
 
+
     Box(modifier = modifier.fillMaxSize()) {
-        SimulationMap(
+        SimulationInput(
             origin = origin,
             destination = destination,
             locations = locations,
@@ -48,7 +48,7 @@ internal fun SimulationContent(
             onMapLongPress = onMapLongPress
         )
 
-        PlayerControls(
+        SimulationControls(
             viewModel = viewModel,
             locations = locations,
             modifier = Modifier
