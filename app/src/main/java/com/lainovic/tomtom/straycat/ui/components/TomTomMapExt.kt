@@ -24,40 +24,32 @@ import com.tomtom.sdk.map.display.marker.MarkerOptions
 import com.tomtom.sdk.map.display.polyline.Polyline
 import com.tomtom.sdk.map.display.polyline.PolylineOptions
 import com.tomtom.sdk.map.display.ui.MapFragment
+import kotlin.collections.remove
 import kotlin.time.Duration.Companion.milliseconds
 
 
-internal fun TomTomMap.updateMarker(
-    existingMarker: Marker?,
+internal fun TomTomMap.addMarker(
     location: Location,
-    resourceId: Int = R.drawable.cat_paw,
-): Marker {
-    existingMarker?.remove()
-
-    return addMarker(
-        MarkerOptions(
-            coordinate = GeoPoint(
-                latitude = location.latitude,
-                longitude = location.longitude
-            ),
-            pinImage = ImageFactory.fromResource(resourceId)
-        )
+    resourceId: Int = R.drawable.blue_paw,
+) = addMarker(
+    MarkerOptions(
+        coordinate = GeoPoint(
+            latitude = location.latitude,
+            longitude = location.longitude
+        ),
+        pinImage = ImageFactory.fromResource(resourceId)
     )
-}
+)
 
-internal fun TomTomMap.updatePolyline(
-    existingPolyline: Polyline?,
+internal fun TomTomMap.addPolyline(
     locations: List<Location>,
-): Polyline {
-    existingPolyline?.remove()
-    return addPolyline(
-        PolylineOptions(
-            coordinates = locations.map(Location::toGeoPoint),
-            lineColor = Color.Red.toArgb(),
-            outlineColor = Color.Black.toArgb(),
-        )
+) = addPolyline(
+    PolylineOptions(
+        coordinates = locations.map(Location::toGeoPoint),
+        lineColor = Color(0xFF0066FF).toArgb(),
+        outlineColor = Color(0xFF00D9FF).toArgb(),
     )
-}
+)
 
 internal fun TomTomMap.animateToLocation(
     location: Location,

@@ -6,8 +6,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -91,37 +89,54 @@ private fun PlayerButtons(
         animationSpec = tween(300)
     )
 
-    Column(modifier = modifier) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = modifier.fillMaxWidth()
+    Column(
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalAlignment = Alignment.End,
+        modifier = modifier
+    ) {
+        LinearProgressIndicator(
+            progress = { progress },
+            color = Color(0xFF0066FF),
+        )
+        Column(
+            horizontalAlignment = Alignment.End,
         ) {
-            Spacer(modifier = Modifier.weight(1f))
-            Button(
-                onClick = onPauseResumePlayer,
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Button(
+                    onClick = onPauseResumePlayer,
+                    elevation = ButtonDefaults.buttonElevation(
+                        defaultElevation = 6.dp,
+                        pressedElevation = 8.dp
+                    ),
 //                colors = ButtonDefaults.buttonColors(
 //                    contentColor = buttonColor
 //                )
-            ) {
-                val (icon, text) = pauseResumeButtonState.toIconAndText()
-                Icon(imageVector = icon, contentDescription = text)
+                ) {
+                    val (icon, text) = pauseResumeButtonState.toIconAndText()
+                    Icon(
+                        imageVector = icon, contentDescription = text,
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
+                Button(
+                    onClick = onStopPlayer,
+                    elevation = ButtonDefaults.buttonElevation(
+                        defaultElevation = 6.dp,
+                        pressedElevation = 8.dp
+                    ),
+                ) {
+                    val (icon, text) = startStopButtonState.toIconAndText()
+                    Icon(
+                        imageVector = icon, contentDescription = text,
+                        modifier = Modifier.size(32.dp)
+                    )
+                }
             }
-            Button(onClick = onStopPlayer) {
-                val (icon, text) = startStopButtonState.toIconAndText()
-                Icon(imageVector = icon, contentDescription = text)
-            }
-            Spacer(modifier = Modifier.weight(1f))
         }
-        LinearProgressIndicator(
-            progress = { progress },
-            modifier = Modifier.fillMaxWidth()
-        )
     }
-}
-
-fun Modifier.Companion.align(bottomEnd: Alignment) {
-    TODO("Not yet implemented")
 }
 
 @Composable
@@ -132,6 +147,10 @@ private fun PlayButton(
     Button(
         onClick = onClick,
         shape = CircleShape,
+        elevation = ButtonDefaults.buttonElevation(
+            defaultElevation = 6.dp,
+            pressedElevation = 8.dp
+        ),
         modifier = modifier
     ) {
         Icon(

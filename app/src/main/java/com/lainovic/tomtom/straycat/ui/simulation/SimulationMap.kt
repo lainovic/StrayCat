@@ -23,9 +23,10 @@ internal fun SimulationMap(
     locationProvider: LocationProvider,
     onOriginSelected: (Location, String) -> Unit,
     onDestinationSelected: (Location, String) -> Unit,
-    onMapLongPress: (Location) -> Unit
+    onMapLongPress: (Location) -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    Column {
+    Column(modifier = modifier) {
         Text(
             modifier = Modifier.padding(8.dp),
             text = "${generateCatSound()} \uD83D\uDC08",
@@ -36,7 +37,7 @@ internal fun SimulationMap(
         MapView(
             origin = origin,
             destination = destination,
-            points = locations,
+            locations = locations,
             locationProvider = locationProvider,
             onMapLongPress = onMapLongPress,
             modifier = Modifier

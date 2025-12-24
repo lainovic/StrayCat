@@ -35,7 +35,7 @@ fun MapView(
     origin: Location? = null,
     destination: Location? = null,
     locationProvider: LocationProvider,
-    points: List<Location> = emptyList(),
+    locations: List<Location> = emptyList(),
     onMapLongPress: (Location) -> Unit = { _ -> },
 ) {
     val context = LocalContext.current
@@ -76,10 +76,8 @@ fun MapView(
             return@LaunchedEffect
         }
 
-        originMarker = map.updateMarker(
-            originMarker,
-            origin,
-        )
+        originMarker?.remove()
+        originMarker = map.addMarker(origin)
 
         destination?.let { destination ->
             map.animateToBounds(listOf(origin, destination))
@@ -96,10 +94,8 @@ fun MapView(
             return@LaunchedEffect
         }
 
-        destinationMarker = map.updateMarker(
-            destinationMarker,
-            destination,
-        )
+        destinationMarker?.remove()
+        destinationMarker = map.addMarker(destination)
 
         origin?.let { origin ->
             map.animateToBounds(listOf(origin, destination))
@@ -108,20 +104,16 @@ fun MapView(
         }
     }
 
-    LaunchedEffect(tomtomMap, points) {
+    LaunchedEffect(tomtomMap, locations) {
         val map = tomtomMap ?: return@LaunchedEffect
-        if (points.isEmpty()) {
+        if (locations.isEmpty() || locations.size < 2) {
             polyline?.remove()
             polyline = null
             return@LaunchedEffect
         }
 
-        if (points.size >= 2) {
-            polyline = map.updatePolyline(
-                polyline,
-                points,
-            )
-        }
+        polyline?.remove()
+        polyline = map.addPolyline(locations)
     }
 
     LaunchedEffect(mapFragment) {

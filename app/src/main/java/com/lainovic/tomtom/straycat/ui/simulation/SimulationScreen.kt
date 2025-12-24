@@ -3,15 +3,12 @@ package com.lainovic.tomtom.straycat.ui.simulation
 import android.content.Context
 import android.location.Location
 import androidx.compose.foundation.layout.Box
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lainovic.tomtom.straycat.ui.showToast
@@ -34,8 +31,6 @@ fun SimulationScreen(
     val locations by viewModel.points
     val errorMessage by viewModel.errorMessage
 
-    val isLoading by viewModel.isLoading.collectAsState()
-
     val snackbarHostState = remember { SnackbarHostState() }
 
     Box(modifier = modifier) {
@@ -57,12 +52,12 @@ fun SimulationScreen(
                 when {
                     origin == null -> {
                         viewModel.setOrigin(location)
-                        context.showToast("Origin set to: ${location.prettyFormat()}")
+                        context.showToast("Origin set to: ${location.prettyPrint()}")
                     }
 
                     destination == null -> {
                         viewModel.setDestination(location)
-                        context.showToast("Destination set to: ${location.prettyFormat()}")
+                        context.showToast("Destination set to: ${location.prettyPrint()}")
                     }
 
                     else -> {
@@ -73,12 +68,6 @@ fun SimulationScreen(
             },
             modifier = modifier
         )
-
-        if (isLoading) {
-            CircularProgressIndicator(
-                modifier = Modifier.align(Alignment.Center)
-            )
-        }
     }
 
     ErrorEffect(errorMessage, context)
@@ -105,5 +94,5 @@ private fun ErrorEffect(
     }
 }
 
-private fun Location.prettyFormat(): String =
+private fun Location.prettyPrint() =
     "%.2f, %.2f".format(latitude, longitude)

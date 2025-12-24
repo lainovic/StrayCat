@@ -64,7 +64,6 @@ class SimulationViewModel(
             try {
                 val result = routePlanner.planRoute(origin, destination)
                 _points.value = result
-//                animateRoute(result)
             } catch (e: Exception) {
                 _errorMessage.value = e.message
                 _errorEvents.emit(e.message ?: "Unknown error")
@@ -73,15 +72,6 @@ class SimulationViewModel(
             }
         }
     }
-
-//    private fun animateRoute(points: List<Location>) {
-//        viewModelScope.launch {
-//            points.asFlow()
-//                .onEach { delay(1) }
-//                .scan(emptyList<Location>()) { acc, point -> acc + point }
-//                .collect { _animatedPoints.value = it }
-//        }
-//    }
 
     companion object {
         fun Factory(routePlanner: RoutePlanner): ViewModelProvider.Factory =
