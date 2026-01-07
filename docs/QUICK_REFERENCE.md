@@ -14,12 +14,12 @@ UI → ViewModel → Facade → Service → Simulator → Flow
 | File | Purpose | Layer |
 |------|---------|-------|
 | `MainActivity.kt` | UI & Permissions | Presentation |
-| `LocationPlayerViewModel.kt` | UI Logic | Presentation |
-| `LocationPlayerServiceFacade.kt` | Service Abstraction | Facade |
-| `LocationPlayerService.kt` | Background Work | Service |
+| `SimulationPlayerViewModel.kt` | UI Logic | Presentation |
+| `SimulationServiceFacade.kt` | Service Abstraction | Facade |
+| `SimulationService.kt` | Background Work | Service |
 | `TickerLocationService.kt` | Ticker Implementation | Service |
 | `LocationSimulator.kt` | Flow Collection | Simulation |
-| `LocationServiceState.kt` | State Model | Domain |
+| `SimulationState.kt` | State Model | Domain |
 
 ## Command Cheat Sheet
 

@@ -85,7 +85,7 @@ This document contains visual representations of the StrayCat architecture.
 │  │  │  private val simulator by lazy {                             ││  │
 │  │  │    LocationSimulator(                                        ││  │
 │  │  │      locationFlow = createLocationFlow(),                    ││  │
-│  │  │      onTick = { tick -> Log.i(TAG, "Tick: $tick") },        ││  │
+│  │  │      onTick = { tick -> Logger.i(TAG, "Tick: $tick") },        ││  │
 │  │  │      backgroundScope = CoroutineScope(Default + handler)     ││  │
 │  │  │    )                                                          ││  │
 │  │  │  }                                                            ││  │

@@ -1,14 +1,12 @@
 package com.lainovic.tomtom.straycat.application
 
 import android.content.Context
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import com.lainovic.tomtom.straycat.ui.initPlaces
-import com.lainovic.tomtom.straycat.ui.rememberCustomLocationProvider
-import com.lainovic.tomtom.straycat.ui.rememberRoutePlanner
+import com.lainovic.tomtom.straycat.domain.simulation.SimulationEvent
+import com.lainovic.tomtom.straycat.infrastructure.analytics.InMemorySimulationEventBus
+import com.lainovic.tomtom.straycat.infrastructure.shared.initPlaces
+import com.lainovic.tomtom.straycat.infrastructure.shared.rememberCustomLocationProvider
+import com.lainovic.tomtom.straycat.infrastructure.shared.rememberRoutePlanner
 import com.lainovic.tomtom.straycat.ui.simulation.SimulationScreen
 import com.tomtom.quantity.Distance
 import com.tomtom.sdk.location.LocationProviderConfig
@@ -26,13 +24,13 @@ fun StrayCatApp(context: Context) {
         )
     )
 
-    Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-        SimulationScreen(
-            context = context,
-            routePlanner = routePlanner,
-            locationProvider = locationProvider,
-            modifier = Modifier
-                .padding(innerPadding)
-        )
-    }
+    SimulationScreen(
+        context = context,
+        routePlanner = routePlanner,
+        locationProvider = locationProvider,
+    )
+
+    InMemorySimulationEventBus.pushEvent(
+        SimulationEvent.SimulationInitialized
+    )
 }

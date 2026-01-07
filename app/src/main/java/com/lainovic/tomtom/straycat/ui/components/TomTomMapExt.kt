@@ -2,13 +2,13 @@ package com.lainovic.tomtom.straycat.ui.components
 
 import android.content.Context
 import android.location.Location
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.fragment.app.FragmentManager
 import com.lainovic.tomtom.straycat.R
-import com.lainovic.tomtom.straycat.domain.service.CustomLocationProvider
+import com.lainovic.tomtom.straycat.infrastructure.location.CustomLocationProvider
 import com.lainovic.tomtom.straycat.shared.toGeoPoint
 import com.lainovic.tomtom.straycat.shared.toLocation
+import com.lainovic.tomtom.straycat.ui.theme.AppColors
 import com.tomtom.sdk.map.display.location.LocationMarkerOptions
 import com.tomtom.quantity.Distance
 import com.tomtom.sdk.location.DefaultLocationProviderFactory
@@ -28,7 +28,7 @@ import kotlin.collections.remove
 import kotlin.time.Duration.Companion.milliseconds
 
 
-internal fun TomTomMap.addMarker(
+fun TomTomMap.addMarker(
     location: Location,
     resourceId: Int = R.drawable.blue_paw,
 ) = addMarker(
@@ -41,17 +41,17 @@ internal fun TomTomMap.addMarker(
     )
 )
 
-internal fun TomTomMap.addPolyline(
+fun TomTomMap.addPolyline(
     locations: List<Location>,
 ) = addPolyline(
     PolylineOptions(
         coordinates = locations.map(Location::toGeoPoint),
-        lineColor = Color(0xFF0066FF).toArgb(),
-        outlineColor = Color(0xFF00D9FF).toArgb(),
+        lineColor = AppColors.Primary.toArgb(),
+        outlineColor = AppColors.OnPrimary.toArgb(),
     )
 )
 
-internal fun TomTomMap.animateToLocation(
+fun TomTomMap.animateToLocation(
     location: Location,
     zoom: Double? = null,
     duration: Long = 1000,
@@ -68,7 +68,7 @@ internal fun TomTomMap.animateToLocation(
     )
 }
 
-internal fun TomTomMap.animateToBounds(
+fun TomTomMap.animateToBounds(
     locations: List<Location>,
     duration: Long = 1000,
 ) {
@@ -98,7 +98,7 @@ internal fun TomTomMap.animateToBounds(
     )
 }
 
-internal fun createTomTomMapFragment(
+fun createTomTomMapFragment(
     fragmentManager: FragmentManager,
     mapOptions: MapOptions,
     onFragmentReady: (MapFragment) -> Unit
@@ -111,7 +111,7 @@ internal fun createTomTomMapFragment(
     onFragmentReady(newFragment)
 }
 
-internal fun TomTomMap.initialize(
+fun TomTomMap.initialize(
     context: Context,
     locationProvider: LocationProvider,
     onMapLongPress: (Location) -> Unit,

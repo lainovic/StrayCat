@@ -1,8 +1,10 @@
 package com.lainovic.tomtom.straycat.infrastructure.shared
 
 import android.location.Location
+import com.lainovic.tomtom.straycat.domain.location.SimulationPoint
+import com.lainovic.tomtom.straycat.shared.calculateSpeedBetweenPoints
 import com.lainovic.tomtom.straycat.shared.toGeoPoint
-import com.lainovic.tomtom.straycat.shared.toLocation
+import com.lainovic.tomtom.straycat.shared.toSimulationPoint
 import com.tomtom.sdk.location.Place
 import com.tomtom.sdk.routing.RoutePlanner
 import com.tomtom.sdk.routing.RoutePlanningCallback
@@ -11,6 +13,7 @@ import com.tomtom.sdk.routing.RoutingFailure
 import com.tomtom.sdk.routing.options.Itinerary
 import com.tomtom.sdk.routing.options.ItineraryPoint
 import com.tomtom.sdk.routing.options.RoutePlanningOptions
+import com.tomtom.sdk.routing.route.Route
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -18,7 +21,7 @@ import kotlin.coroutines.resumeWithException
 suspend fun RoutePlanner.planRoute(
     origin: Location,
     destination: Location,
-): List<Location> = suspendCancellableCoroutine { cont ->
+): List<SimulationPoint> = suspendCancellableCoroutine { cont ->
     val job = planRoute(
         routePlanningOptions = RoutePlanningOptions(
             itinerary = Itinerary(
@@ -42,13 +45,33 @@ suspend fun RoutePlanner.planRoute(
             }
 
             override fun onSuccess(result: RoutePlanningResponse) {
-                cont.resume(
-                    result.routes.first().routePoints.map {
-                        it.toLocation()
-                    })
+                val route = result.routes.first()
+                cont.resume(route.toSimulationPoints())
             }
         },
     )
 
     cont.invokeOnCancellation { job.cancel() }
+}
+
+private fun Route.toSimulationPoints(): List<SimulationPoint> {
+    val speeds = calculateSegmentSpeeds()
+    val baseOffset = routePoints.first().travelTime
+
+    return routePoints.mapIndexed { index, point ->
+        point.toSimulationPoint(
+            elapsedTravelTime = point.travelTime - baseOffset,
+            speed = speeds[index],
+        )
+    }
+}
+
+private fun Route.calculateSegmentSpeeds(): List<Double?> {
+    val segmentSpeeds = routePoints.zipWithNext { prev, curr ->
+        calculateSpeedBetweenPoints(
+            startOffset = prev.routeOffset,
+            endOffset = curr.routeOffset,
+        )
+    }
+    return listOf(null) + segmentSpeeds
 }

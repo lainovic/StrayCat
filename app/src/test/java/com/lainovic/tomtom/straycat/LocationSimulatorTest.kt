@@ -1,6 +1,6 @@
 package com.lainovic.tomtom.straycat
 
-import com.lainovic.tomtom.straycat.domain.service.LocationSimulator
+import com.lainovic.tomtom.straycat.domain.simulation.LocationSimulator
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flow

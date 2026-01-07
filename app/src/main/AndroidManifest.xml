@@ -35,7 +35,7 @@
         </activity>
 
         <service
-            android:name=".domain.service.LocationPlayerService"
+            android:name=".infrastructure.service.SimulationService"
             android:exported="false"
             android:foregroundServiceType="location" />
     </application>

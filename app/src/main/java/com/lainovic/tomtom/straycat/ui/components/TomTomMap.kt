@@ -1,7 +1,6 @@
 package com.lainovic.tomtom.straycat.ui.components
 
 import android.location.Location
-import android.util.Log
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -14,10 +13,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.fragment.app.FragmentActivity
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import com.lainovic.tomtom.straycat.ui.rememberMapOptions
+import com.lainovic.tomtom.straycat.infrastructure.shared.rememberMapOptions
 import com.tomtom.sdk.location.LocationProvider
 import com.tomtom.sdk.map.display.TomTomMap
 import com.tomtom.sdk.map.display.annotation.AlphaInitialCameraOptionsApi
@@ -25,9 +22,7 @@ import com.tomtom.sdk.map.display.marker.Marker
 import com.tomtom.sdk.map.display.polyline.Polyline
 import com.tomtom.sdk.map.display.ui.MapFragment
 
-@OptIn(
-    AlphaInitialCameraOptionsApi::class,
-)
+@OptIn(AlphaInitialCameraOptionsApi::class)
 @Composable
 fun TomTomMap(
     modifier: Modifier = Modifier,
@@ -128,31 +123,7 @@ fun TomTomMap(
     }
 
     DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            Log.d("MapView", "Lifecycle event: $event")
-            when (event) {
-                Lifecycle.Event.ON_RESUME -> {
-                    Log.d("MapView", "ON_RESUME")
-                }
-
-                Lifecycle.Event.ON_PAUSE -> {
-                    Log.d("MapView", "ON_PAUSE")
-                }
-
-                Lifecycle.Event.ON_DESTROY -> {
-                    Log.d("MapView", "ON_DESTROY")
-                }
-
-                else -> {
-                    Log.d("MapView", "Other event: $event")
-                }
-            }
-        }
-
-        lifecycleOwner.lifecycle.addObserver(observer)
-
         onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
             mapFragment?.let {
                 fragmentManager.beginTransaction()
                     .remove(it)

@@ -340,7 +340,7 @@ Documentation is updated when:
 
 ### Design Patterns
 
-- [Clean Architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
+- [Clean Architecture](https://bLogger.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
 - [Gang of Four Patterns](https://en.wikipedia.org/wiki/Design_Patterns)
 
 ---

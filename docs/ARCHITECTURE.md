@@ -337,7 +337,7 @@ abstract class LocationService<T> : Service() {
     private val simulator by lazy {
         LocationSimulator(
             locationFlow = createLocationFlow(),
-            onTick = { tick -> Log.i(TAG, "Tick: $tick") },
+            onTick = { tick -> Logger.i(TAG, "Tick: $tick") },
             backgroundScope = CoroutineScope(Dispatchers.Default + handler)
         )
     }
@@ -740,7 +740,7 @@ override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
             // ...
         }
     } catch (e: Exception) {
-        Log.e(TAG, "Error in onStartCommand", e)
+        Logger.e(TAG, "Error in onStartCommand", e)
         broadcastState(LocationServiceState.Error(e.message ?: "Unknown error"))
         stopSelf()  // Stop service on error
     }
@@ -761,7 +761,7 @@ override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
 **Implementation:**
 ```kotlin
 val handler = CoroutineExceptionHandler { _, throwable ->
-    Log.e(TAG, "Exception caught in simulator", throwable)
+    Logger.e(TAG, "Exception caught in simulator", throwable)
     broadcastState(LocationServiceState.Error(throwable.message ?: "Flow collection error"))
 }
 
@@ -1067,35 +1067,35 @@ Every layer logs key events:
 
 **MainActivity:**
 ```kotlin
-Log.d(TAG, "Permission result: $permissions")
+Logger.d(TAG, "Permission result: $permissions")
 ```
 
 **ViewModel:**
 ```kotlin
-Log.d(TAG, "startStop() called, current state: ${state.value}")
+Logger.d(TAG, "startStop() called, current state: ${state.value}")
 ```
 
 **Facade:**
 ```kotlin
-Log.d(TAG, "start() called - sending ACTION_START")
-Log.d(TAG, "Broadcast received: action=${intent?.action}")
+Logger.d(TAG, "start() called - sending ACTION_START")
+Logger.d(TAG, "Broadcast received: action=${intent?.action}")
 ```
 
 **Service:**
 ```kotlin
-Log.d(TAG, "onStartCommand() called, action=${intent?.action}")
-Log.d(TAG, "ACTION_START: Simulator.start() called")
+Logger.d(TAG, "onStartCommand() called, action=${intent?.action}")
+Logger.d(TAG, "ACTION_START: Simulator.start() called")
 ```
 
 **Simulator:**
 ```kotlin
-Log.d(TAG, "start() called, collectionJob=$collectionJob")
-Log.d(TAG, "Received tick: $tick, isPaused=${isPaused.value}")
+Logger.d(TAG, "start() called, collectionJob=$collectionJob")
+Logger.d(TAG, "Received tick: $tick, isPaused=${isPaused.value}")
 ```
 
 **Flow:**
 ```kotlin
-Log.d(TAG, "Emitting tick: $tick")
+Logger.d(TAG, "Emitting tick: $tick")
 ```
 
 ### Log Filtering
@@ -1251,7 +1251,7 @@ The architecture is ready for:
 - [Kotlin Flow Documentation](https://kotlinlang.org/docs/flow.html)
 - [Jetpack Compose](https://developer.android.com/jetpack/compose)
 - [Foreground Services](https://developer.android.com/develop/background-work/services/foreground-services)
-- [Clean Architecture by Robert C. Martin](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
+- [Clean Architecture by Robert C. Martin](https://bLogger.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
 
 ---
 

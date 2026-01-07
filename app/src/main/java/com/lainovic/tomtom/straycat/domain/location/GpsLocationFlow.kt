@@ -1,0 +1,43 @@
+package com.lainovic.tomtom.straycat.domain.location
+
+import android.Manifest
+import android.location.Location
+import android.location.LocationListener
+import android.location.LocationManager
+import androidx.annotation.RequiresPermission
+import com.lainovic.tomtom.straycat.domain.simulation.SimulationConfiguration
+import com.lainovic.tomtom.straycat.infrastructure.logging.Logger
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.flow.callbackFlow
+
+@RequiresPermission(
+    allOf = [
+        Manifest.permission.ACCESS_FINE_LOCATION,
+        Manifest.permission.ACCESS_COARSE_LOCATION
+    ]
+)
+fun LocationManager.observeLocations(
+    provider: String = LocationManager.GPS_PROVIDER,
+    configuration: SimulationConfiguration,
+): Flow<Location> = callbackFlow {
+    val tag = "LocationManagerExt"
+
+    val listener = LocationListener { location ->
+        trySend(location)
+    }
+
+    requestLocationUpdates(
+        provider,
+        configuration.delayBetweenEmissions.inWholeMilliseconds,
+        configuration.distanceBetweenEmissions.inMeters().toFloat(),
+        listener,
+    )
+
+    awaitClose {
+        removeUpdates(listener)
+        Logger.d(tag, "Location updates removed for provider=$provider")
+    }
+}.buffer(capacity = Channel.CONFLATED)

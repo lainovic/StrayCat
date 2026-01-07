@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -21,8 +22,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.lainovic.tomtom.straycat.ui.theme.AppColors
 import com.google.android.libraries.places.api.Places
 import com.google.android.libraries.places.api.model.AutocompletePrediction
 import com.google.android.libraries.places.api.model.Place
@@ -43,7 +46,7 @@ import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 @Composable
-fun SearchField(
+fun PlaceSearchField(
     modifier: Modifier = Modifier,
     placeholderText: String = "Search Location",
     onLocationSelected: (Location, String) -> Unit = { _, _ -> },
@@ -53,10 +56,10 @@ fun SearchField(
 
     val searchQuery = remember { MutableStateFlow("") }
     var searchQueryText by remember { mutableStateOf("") }
-    var predictions
-            by remember {
-                mutableStateOf<List<AutocompletePrediction>>(emptyList())
-            }
+    var predictions by remember {
+        mutableStateOf<List<AutocompletePrediction>>(emptyList())
+    }
+    val isSelecting = remember { MutableStateFlow(false) }
 
     Column(
         modifier = modifier
@@ -69,8 +72,19 @@ fun SearchField(
                 searchQuery.value = query
             },
             modifier = Modifier.fillMaxWidth(),
-            placeholder = { Text(text = placeholderText) },
-            leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+            placeholder = {
+                Text(
+                    text = placeholderText,
+                    color = Color(0xFF9E9E9E) // Medium gray for placeholder
+                )
+            },
+            leadingIcon = {
+                Icon(
+                    Icons.Default.Search,
+                    contentDescription = "Search",
+                    tint = AppColors.Primary // TomTom blue
+                )
+            },
             trailingIcon = {
                 if (searchQueryText.isNotEmpty()) {
                     IconButton(onClick = {
@@ -79,20 +93,34 @@ fun SearchField(
                     }) {
                         Icon(
                             Icons.Default.Close,
-                            contentDescription = "Clear Search"
+                            contentDescription = "Clear Search",
+                            tint = AppColors.Primary // TomTom blue
                         )
                     }
                 }
-            }
+            },
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedTextColor = Color(0xFF212121), // Dark gray/black text
+                unfocusedTextColor = Color(0xFF212121), // Dark gray/black text
+                focusedBorderColor = AppColors.Primary, // TomTom blue border when focused
+                unfocusedBorderColor = Color(0xFFBDBDBD), // Light gray border when not focused
+                focusedContainerColor = AppColors.Surface, // White background
+                unfocusedContainerColor = AppColors.Surface, // White background
+                cursorColor = AppColors.Primary // TomTom blue cursor
+            )
         )
 
         LazyColumn {
             items(predictions) { prediction ->
                 Text(
                     text = prediction.getFullText(null).toString(),
+                    color = Color(0xFF212121), // Dark gray/black text for readability
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable {
+                            isSelecting.value = true
+                            predictions = emptyList()
+
                             val placeFields = listOf(
                                 Place.Field.LOCATION,
                                 Place.Field.DISPLAY_NAME,
@@ -112,12 +140,13 @@ fun SearchField(
                                             longitude = location.longitude
                                         }
                                         onLocationSelected(location, name)
-                                        predictions = emptyList()
                                         searchQueryText = name
-                                        searchQuery.value = name
+                                        // Don't update searchQuery.value to avoid triggering search
+                                        isSelecting.value = false
                                     }
                                 }
                         }
+                        .padding(vertical = 12.dp, horizontal = 16.dp)
                 )
             }
         }
@@ -127,6 +156,7 @@ fun SearchField(
         searchQuery
             .debounce(300.milliseconds)
             .filter { it.length >= 3 }
+            .filter { !isSelecting.value } // Skip search when user is selecting
             .distinctUntilChanged()
             .flatMapLatest { query ->
                 flow {
@@ -135,7 +165,9 @@ fun SearchField(
                     .catch { emit(emptyList()) }
             }
             .collect { results ->
-                predictions = results
+                if (!isSelecting.value) {
+                    predictions = results
+                }
             }
     }
 }
@@ -159,7 +191,7 @@ private suspend fun PlacesClient.searchPredictions(
 ): List<AutocompletePrediction> {
     return suspendCancellableCoroutine { continuation ->
         findAutocompletePredictions(query) { predictions ->
-            continuation.resume(predictions) {}
+            continuation.resumeWith(Result.success(predictions))
         }
     }
 }

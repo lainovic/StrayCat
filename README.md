@@ -124,12 +124,12 @@ Permissions are requested at runtime on first launch.
 ```
 app/src/main/java/com/lainovic/tomtom/straycat/
 ├── MainActivity.kt                 # UI & permissions
-├── LocationPlayerViewModel.kt      # Presentation logic
-├── LocationPlayerServiceFacade.kt        # Service abstraction
-├── LocationPlayerService.kt              # Abstract service
+├── SimulationPlayerViewModel.kt      # Presentation logic
+├── SimulationServiceFacade.kt        # Service abstraction
+├── SimulationService.kt              # Abstract service
 ├── TickerLocationService.kt        # Ticker implementation
 ├── LocationSimulator.kt            # Flow collection
-└── LocationServiceState.kt         # State model
+└── SimulationState.kt         # State model
 
 app/src/test/java/
 ├── LocationSimulatorTest.kt        # Simulator tests
