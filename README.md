@@ -88,7 +88,7 @@ To clear and start over, long-press on the map again after a route has been gene
 - ✅ Pause/resume functionality
 - ✅ Speed control and looping
 - ✅ Error handling and recovery
-- ✅ Comprehensive documentation
+- ✅ Start with documentation
 
 ### TODO
 - 🚧 Speed multiplier UI
@@ -99,6 +99,7 @@ To clear and start over, long-press on the map again after a route has been gene
 - 🚧 More elaborate testing strategy
 - 🚧 Add unit and integration tests
 - 🚧 Enhanced UI controls
+- 🚧 Comprehensive documentation
 
 ## License
 
