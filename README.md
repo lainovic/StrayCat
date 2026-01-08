@@ -18,6 +18,10 @@
 StrayCat is a Android application for location simulation and GPS tracking.
 Perfect for testing location-based features and route simulations.
 
+<div align="center">
+  <img src="docs/assets/screenshot.png" alt="screenshot" width="400"/>
+</div>
+
 ### Features
 
 - 🎮 **Full Playback Control** - Start, pause, resume, and stop.
