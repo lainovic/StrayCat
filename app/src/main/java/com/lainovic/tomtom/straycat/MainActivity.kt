@@ -18,13 +18,13 @@ class MainActivity : FragmentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
+        requestLocationPermissions()
+
         setContent {
             StrayCatTheme {
                 StrayCatApp(applicationContext)
             }
         }
-
-        requestLocationPermissions()
     }
 
     private fun requestLocationPermissions() {

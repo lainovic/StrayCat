@@ -5,7 +5,7 @@ import android.location.Location
 import androidx.compose.ui.graphics.toArgb
 import androidx.fragment.app.FragmentManager
 import com.lainovic.tomtom.straycat.R
-import com.lainovic.tomtom.straycat.infrastructure.location.CustomLocationProvider
+import com.lainovic.tomtom.straycat.infrastructure.location.DefaultLocationProviderWrapper
 import com.lainovic.tomtom.straycat.shared.toGeoPoint
 import com.lainovic.tomtom.straycat.shared.toLocation
 import com.lainovic.tomtom.straycat.ui.theme.AppColors

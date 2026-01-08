@@ -5,25 +5,21 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import com.google.android.libraries.places.api.Places
 import com.lainovic.tomtom.straycat.BuildConfig
+import com.lainovic.tomtom.straycat.domain.shared.toGpsConfiguration
+import com.lainovic.tomtom.straycat.domain.simulation.SimulationConfiguration
 import com.lainovic.tomtom.straycat.infrastructure.location.CustomLocationProvider
-import com.tomtom.sdk.location.DefaultLocationProviderFactory
 import com.tomtom.sdk.location.LocationProvider
-import com.tomtom.sdk.location.LocationProviderConfig
 import com.tomtom.sdk.map.display.MapOptions
 import com.tomtom.sdk.routing.online.OnlineRoutePlanner
 
 @Composable
 fun rememberCustomLocationProvider(
     context: Context,
-    locationProviderConfig: LocationProviderConfig
+    configuration: SimulationConfiguration = SimulationConfiguration(),
 ): LocationProvider = remember {
-    val defaultLocationProvider = DefaultLocationProviderFactory.create(
-        context = context,
-        config = locationProviderConfig
-    )
-
     CustomLocationProvider(
-        defaultLocationProvider = defaultLocationProvider,
+        locationManager = context.getLocationManager(),
+        configuration = configuration.toGpsConfiguration(),
     )
 }
 

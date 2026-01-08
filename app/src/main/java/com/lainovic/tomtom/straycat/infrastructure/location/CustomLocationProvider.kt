@@ -1,94 +1,76 @@
 package com.lainovic.tomtom.straycat.infrastructure.location
 
-import com.lainovic.tomtom.straycat.domain.simulation.MutableSimulationConfiguration
-import com.lainovic.tomtom.straycat.domain.simulation.SimulationConfiguration
-import com.lainovic.tomtom.straycat.infrastructure.logging.Logger
-import com.lainovic.tomtom.straycat.shared.toImmutable
-import com.lainovic.tomtom.straycat.shared.toMutable
+import android.Manifest
+import android.location.LocationManager
+import androidx.annotation.RequiresPermission
+import com.lainovic.tomtom.straycat.domain.location.observeLocations
+import com.lainovic.tomtom.straycat.shared.toGeoLocation
+import com.tomtom.sdk.location.GeoLocation
+import com.tomtom.sdk.location.LocationProvider
 import com.tomtom.sdk.location.OnLocationUpdateListener
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import java.util.concurrent.CopyOnWriteArraySet
 
 class CustomLocationProvider(
-    private val defaultLocationProvider: com.tomtom.sdk.location.LocationProvider,
-    configuration: SimulationConfiguration = SimulationConfiguration(),
-) : com.tomtom.sdk.location.LocationProvider by defaultLocationProvider {
+    private val locationManager: LocationManager,
+    private val configuration: GpsConfiguration,
+    private val backgroundScope: CoroutineScope = CoroutineScope(
+        Dispatchers.Main.limitedParallelism(1)
+    ),
+) : LocationProvider {
+    private var locationJob: Job? = null
 
-    private val interceptors = mutableMapOf<Int, com.tomtom.sdk.location.OnLocationUpdateListener>()
-    private var lastLocation: com.tomtom.sdk.location.GeoLocation? = null
-
-    private val _configuration = configuration.toMutable()
-
-    val configuration: SimulationConfiguration
-        get() = _configuration.toImmutable()
-
-    override fun addOnLocationUpdateListener(listener: com.tomtom.sdk.location.OnLocationUpdateListener) {
-        val interceptor = OnLocationUpdateListener { location ->
-            Logger.d(TAG, "Intercepted location update: $location")
-            listener.onLocationUpdate(postProcess(location))
-        }
-        defaultLocationProvider.addOnLocationUpdateListener(interceptor)
-        interceptors[listener.hashCode()] = interceptor
-    }
-
-    override fun removeOnLocationUpdateListener(listener: com.tomtom.sdk.location.OnLocationUpdateListener) {
-        val interceptor = interceptors[listener.hashCode()]
-        if (interceptor != null) {
-            interceptors.remove(listener.hashCode())
-            defaultLocationProvider.removeOnLocationUpdateListener(interceptor)
-        }
-    }
-
-    fun updateConfiguration(configBlock: MutableSimulationConfiguration.() -> Unit) {
-        _configuration.apply(configBlock)
-    }
-
-    private fun postProcess(location: com.tomtom.sdk.location.GeoLocation): com.tomtom.sdk.location.GeoLocation {
-        var result = location
-
-        if (result.course == null) {
-            lastLocation?.let {
-                result = calculateCourse(it, result)
-            }
-        }
-
-        lastLocation = result
-        return result
-    }
-
-    private fun genorateNoissTracker(noiseLevelInMeters: Float): Pair<Float, Float> {
-        val noiseLat =
-            (Math.random().toFloat() - 0.5f) * 2 * noiseLevelInMeters /
-                    111320f
-        val noiseLon =
-            (Math.random().toFloat() - 0.5f) * 2 * noiseLevelInMeters /
-                    (111320f * _root_ide_package_.kotlin.math.cos(Math.toRadians(0.0))).toFloat()
-        return Pair(noiseLat, noiseLon)
-    }
-
-    private fun calculateCourse(
-        from: com.tomtom.sdk.location.GeoLocation,
-        to: com.tomtom.sdk.location.GeoLocation
-    ): com.tomtom.sdk.location.GeoLocation {
-        val lat1 = Math.toRadians(from.position.latitude)
-        val lon1 = Math.toRadians(from.position.longitude)
-        val lat2 = Math.toRadians(to.position.latitude)
-        val lon2 = Math.toRadians(to.position.longitude)
-
-        val dLon = lon2 - lon1
-        val y = _root_ide_package_.kotlin.math.sin(dLon) * _root_ide_package_.kotlin.math.cos(lat2)
-        val x = _root_ide_package_.kotlin.math.cos(lat1) * _root_ide_package_.kotlin.math.sin(lat2) -
-                _root_ide_package_.kotlin.math.sin(lat1) * _root_ide_package_.kotlin.math.cos(lat2) * _root_ide_package_.kotlin.math.cos(dLon)
-
-        val heading = (Math.toDegrees(_root_ide_package_.kotlin.math.atan2(y, x)) + 360) % 360
-        return _root_ide_package_.com.tomtom.sdk.location.GeoLocation(
-            position = to.position,
-            accuracy = to.accuracy,
-            speed = to.speed,
-            extras = to.extras,
-            course = _root_ide_package_.com.tomtom.quantity.Angle.Companion.degrees(heading),
+    override val lastKnownLocation: GeoLocation?
+        @RequiresPermission(
+            anyOf = [
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION,
+            ]
         )
+        get() = locationManager
+            .getLastKnownLocation(LocationManager.GPS_PROVIDER)
+            ?.toGeoLocation()
+
+    private val listeners: MutableSet<OnLocationUpdateListener> =
+        CopyOnWriteArraySet()
+
+    override fun disable() {
+        locationJob?.cancel()
+        locationJob = null
     }
 
-    private companion object {
-        val TAG = CustomLocationProvider::class.simpleName!!
+    @RequiresPermission(
+        allOf = [
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION,
+        ]
+    )
+    override fun enable() {
+        locationManager
+            .observeLocations(configuration = configuration)
+            .onEach {
+                val geoLocation = it.toGeoLocation()
+                listeners.forEach { listener ->
+                    listener.onLocationUpdate(geoLocation)
+                }
+            }
+            .launchIn(backgroundScope)
+    }
+
+    override fun addOnLocationUpdateListener(listener: OnLocationUpdateListener) {
+        listeners.add(listener)
+    }
+
+    override fun removeOnLocationUpdateListener(listener: OnLocationUpdateListener) {
+        listeners.remove(listener)
+    }
+
+    override fun close() {
+        disable()
+        listeners.clear()
     }
 }

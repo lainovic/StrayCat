@@ -14,7 +14,7 @@ import com.lainovic.tomtom.straycat.R
 import com.lainovic.tomtom.straycat.domain.simulation.LocationSimulator
 import com.lainovic.tomtom.straycat.domain.simulation.SimulationConfiguration
 import com.lainovic.tomtom.straycat.infrastructure.location.MockLocationProvider
-import com.lainovic.tomtom.straycat.infrastructure.location.createLocationManager
+import com.lainovic.tomtom.straycat.infrastructure.shared.getLocationManager
 import com.lainovic.tomtom.straycat.infrastructure.logging.Logger
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineName
@@ -22,8 +22,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 
 class SimulationService : Service() {
-    val locationManager: LocationManager by lazy {
-        createLocationManager()
+    private val locationManager: LocationManager by lazy {
+        getLocationManager()
     }
 
     private val mockLocationProvider by lazy {

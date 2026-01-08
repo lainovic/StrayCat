@@ -5,7 +5,7 @@ import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import androidx.annotation.RequiresPermission
-import com.lainovic.tomtom.straycat.domain.simulation.SimulationConfiguration
+import com.lainovic.tomtom.straycat.infrastructure.location.GpsConfiguration
 import com.lainovic.tomtom.straycat.infrastructure.logging.Logger
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.awaitClose
@@ -21,7 +21,7 @@ import kotlinx.coroutines.flow.callbackFlow
 )
 fun LocationManager.observeLocations(
     provider: String = LocationManager.GPS_PROVIDER,
-    configuration: SimulationConfiguration,
+    configuration: GpsConfiguration,
 ): Flow<Location> = callbackFlow {
     val tag = "LocationManagerExt"
 
@@ -29,10 +29,11 @@ fun LocationManager.observeLocations(
         trySend(location)
     }
 
+    Logger.d(tag, "Requesting location updates for provider=$provider")
     requestLocationUpdates(
         provider,
-        configuration.delayBetweenEmissions.inWholeMilliseconds,
-        configuration.distanceBetweenEmissions.inMeters().toFloat(),
+        configuration.minTimeInterval.inWholeMilliseconds,
+        configuration.minDistance.inMeters().toFloat(),
         listener,
     )
 

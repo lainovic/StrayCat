@@ -4,8 +4,10 @@ import android.location.Location
 import android.location.LocationManager
 import android.os.SystemClock
 import com.lainovic.tomtom.straycat.domain.location.SimulationPoint
+import com.tomtom.quantity.Angle
 import com.tomtom.quantity.Distance
 import com.tomtom.sdk.common.valueOr
+import com.tomtom.sdk.location.GeoLocation
 import com.tomtom.sdk.location.GeoPoint
 import com.tomtom.sdk.routing.route.Route
 import com.tomtom.sdk.routing.route.RoutePoint
@@ -15,6 +17,15 @@ fun Location.toGeoPoint(): GeoPoint = GeoPoint(
     latitude = latitude,
     longitude = longitude
 )
+
+fun Location.toGeoLocation() = GeoLocation(
+    position = this.toGeoPoint(),
+    accuracy = Distance.meters(if (hasAccuracy()) this.accuracy.toDouble() else 0.0),
+    course = Angle.degrees(if (hasBearing()) this.bearing.toDouble() else 0.0),
+    time = this.time,
+    elapsedRealtimeNanos = this.elapsedRealtimeNanos,
+)
+
 
 fun GeoPoint.toLocation(
     provider: String = LocationManager.GPS_PROVIDER,
