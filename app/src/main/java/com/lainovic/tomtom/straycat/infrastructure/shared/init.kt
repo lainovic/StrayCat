@@ -15,7 +15,7 @@ import com.tomtom.sdk.routing.online.OnlineRoutePlanner
 @Composable
 fun rememberCustomLocationProvider(
     context: Context,
-    configuration: SimulationConfiguration = SimulationConfiguration(),
+    configuration: SimulationConfiguration,
 ): LocationProvider = remember {
     CustomLocationProvider(
         locationManager = context.getLocationManager(),

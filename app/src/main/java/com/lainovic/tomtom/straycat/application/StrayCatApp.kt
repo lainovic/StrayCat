@@ -2,6 +2,7 @@ package com.lainovic.tomtom.straycat.application
 
 import android.content.Context
 import androidx.compose.runtime.Composable
+import com.lainovic.tomtom.straycat.domain.simulation.SimulationConfiguration
 import com.lainovic.tomtom.straycat.domain.simulation.SimulationEvent
 import com.lainovic.tomtom.straycat.infrastructure.analytics.InMemorySimulationEventBus
 import com.lainovic.tomtom.straycat.infrastructure.shared.initPlaces
@@ -13,7 +14,8 @@ import com.lainovic.tomtom.straycat.ui.simulation.SimulationScreen
 fun StrayCatApp(context: Context) {
     initPlaces(context)
     val routePlanner = rememberRoutePlanner(context)
-    val locationProvider = rememberCustomLocationProvider(context = context)
+    val simulationConfiguration = SimulationConfiguration()
+    val locationProvider = rememberCustomLocationProvider(context, simulationConfiguration)
 
     SimulationScreen(
         context = context,
