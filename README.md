@@ -28,6 +28,7 @@ Perfect for testing location-based features and route simulations.
 - 📍 **Route Simulation** - Replay predefined routes with realistic timing using TomTom Routing SDK
 - ⚙️ **Configurable** (TODO) - Speed multiplier, interpolation, noise injection, looping, and more
 - 🔄 **Map display** - via TomTom Maps SDK
+- 🔍 **Search Locations** - Find points of interest using Google Places Search SDK
 
 #### GPS Configuration
 - **Minimum Time Interval** - Minimum time between location updates
@@ -45,6 +46,8 @@ Perfect for testing location-based features and route simulations.
 - **Language:** Kotlin 2.0.21
 - **UI:** Jetpack Compose
 - **Maps:** TomTom Maps SDK
+- **Routing:** TomTom Routing SDK
+- **Places Search:** Google Places Search SDK
 - **Async:** Kotlin Coroutines & Flow
 - **Architecture:** MVVM + Clean Architecture adhering to DDD principles
 - **Min SDK:** Android 8.0 (API 26)
@@ -97,7 +100,6 @@ To clear and start over, long-press on the map again after a route has been gene
 - 🚧 GPS noise injection
 - 🚧 Route interpolation (maybe)
 - 🚧 More elaborate testing strategy
-- 🚧 Add unit and integration tests
 - 🚧 Enhanced UI controls
 - 🚧 Comprehensive documentation
 
