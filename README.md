@@ -24,9 +24,9 @@ Perfect for testing location-based features and route simulations.
 
 ### Features
 
-- 🎮 **Full Playback Control** - Start, pause, resume, and stop.
-- 📍 **Route Simulation** - Replay predefined routes with realistic timing using TomTom Routing SDK.
-- ⚙️ **Configurable** (TODO) - Speed multiplier, interpolation, noise injection, looping, and more.
+- 🎮 **Full Playback Control** - Start, pause, resume, and stop
+- 📍 **Route Simulation** - Replay predefined routes with realistic timing using TomTom Routing SDK
+- ⚙️ **Configurable** (TODO) - Speed multiplier, interpolation, noise injection, looping, and more
 - 🔄 **Map display** - via TomTom Maps SDK
 
 #### GPS Configuration
