@@ -7,4 +7,8 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <!-- StrayCat App Colors -->
+    <color name="tomtom_blue">#FF0077C8</color>
+    <color name="splash_background">#FFFFFFFF</color>
 </resources>

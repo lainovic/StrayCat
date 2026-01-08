@@ -2,4 +2,11 @@
 <resources>
 
     <style name="Theme.StrayCat" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <style name="Theme.StrayCat.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/splash_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_logo</item>
+        <item name="windowSplashScreenAnimationDuration">500</item>
+        <item name="postSplashScreenTheme">@style/Theme.StrayCat</item>
+    </style>
 </resources>

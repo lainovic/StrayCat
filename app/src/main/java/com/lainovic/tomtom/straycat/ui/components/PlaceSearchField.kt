@@ -114,7 +114,7 @@ fun PlaceSearchField(
             items(predictions) { prediction ->
                 Text(
                     text = prediction.getFullText(null).toString(),
-                    color = Color(0xFF212121), // Dark gray/black text for readability
+                    color = Color(0xFF212121), // Dark gray/black
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable {
