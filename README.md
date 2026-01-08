@@ -39,7 +39,6 @@ Perfect for testing location-based features and route simulations.
 - **Realistic Timing** - Use actual route timing vs fixed intervals
 - **Interpolation** - Smooth transitions between points
 - **Noise Level** - Add GPS signal variance (meters)
-For detailed architecture documentation, see [Architecture Guide](./docs/ARCHITECTURE.md).
 
 ## Tech Stack
 
