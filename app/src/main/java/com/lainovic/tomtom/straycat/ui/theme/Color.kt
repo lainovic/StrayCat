@@ -9,6 +9,7 @@ object AppColors {
 
     // Primary colors - TomTom brand blue
     val Primary = Color(0xFF0077C8) // TomTom blue
+    val PrimaryDarker = Color(0xFF005590)
     val PrimaryDisabled = Color(0xFFBDBDBD) // Light gray
     val OnPrimary = Color.White
 

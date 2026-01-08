@@ -3,8 +3,9 @@ package com.lainovic.tomtom.straycat.ui.components
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.MenuOpen
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Loop
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
@@ -39,7 +40,7 @@ fun OpenButton(
         ) {
             Icon(
                 imageVector = if (!isOpened)
-                    Icons.AutoMirrored.Filled.MenuOpen
+                    Icons.Filled.Search
                 else
                     Icons.Default.Close,
                 contentDescription = if (!isOpened) "Open menu" else "Close menu",

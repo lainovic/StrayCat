@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -24,7 +23,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.StrokeCap
 import com.lainovic.tomtom.straycat.domain.simulation.SimulationState
 import com.lainovic.tomtom.straycat.ui.simulation.SimulationPlayerViewModel
@@ -51,8 +49,7 @@ fun PlaybackControls(
 
     Surface(
         tonalElevation = AppSizes.TonalElevation,
-        shadowElevation = AppSizes.ShadowElevation,
-        color = AppColors.Surface,
+        color = AppColors.Surface.copy(alpha = 0.7f),
         shape = RoundedCornerShape(AppSizes.ButtonCornerRadius),
         modifier = modifier
             .width(AppSizes.PlaybackControlsWidth)
@@ -62,11 +59,9 @@ fun PlaybackControls(
             LinearProgressIndicator(
                 progress = { animatedProgress },
                 color = AppColors.Progress,
-                trackColor = AppColors.ProgressTrack,
+                trackColor = AppColors.ProgressTrack.copy(alpha = 0f),
                 strokeCap = StrokeCap.Butt,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .alpha(0.8f)
+                modifier = Modifier.fillMaxSize()
             )
 
             Row(

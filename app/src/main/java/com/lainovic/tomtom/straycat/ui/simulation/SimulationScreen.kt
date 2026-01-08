@@ -139,9 +139,10 @@ private fun SnackbarEffect(
 private fun SimulationSnackbar(data: SnackbarData) =
     Snackbar(
         snackbarData = data,
-        containerColor = AppColors.Primary,
+        containerColor = AppColors.PrimaryDarker,
         contentColor = AppColors.OnPrimary,
         actionColor = AppColors.OnPrimary,
+        dismissActionContentColor = AppColors.OnPrimary,
         shape = RoundedCornerShape(AppSizes.SnackbarCornerRadius),
         modifier = Modifier.padding(horizontal = AppSizes.ButtonPadding, vertical = 12.dp)
     )
