@@ -13,6 +13,9 @@
 
 ---
 
+> [!NOTE]
+> This has started as a final project on [Coroutines Mastery 2025](https://coroutinesmastery.com/)
+
 ## Overview
 
 StrayCat is a Android application for location simulation and GPS tracking.
