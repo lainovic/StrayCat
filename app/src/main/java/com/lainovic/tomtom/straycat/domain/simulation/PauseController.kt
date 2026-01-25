@@ -18,7 +18,6 @@ class SimplePauseController(
     private val eventBus: SimulationEventBus,
 ) : PauseController {
     private val _isPaused = MutableStateFlow(false)
-    val isPaused: StateFlow<Boolean> = _isPaused
 
     override suspend fun waitIfPaused() {
         if (_isPaused.value) {

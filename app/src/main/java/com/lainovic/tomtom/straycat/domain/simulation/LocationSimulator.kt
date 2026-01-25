@@ -9,9 +9,8 @@ import com.lainovic.tomtom.straycat.shared.toLocation
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.buffer
+import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.flatMapLatest
@@ -19,19 +18,19 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.retry
+import kotlinx.coroutines.flow.withIndex
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 
 class LocationSimulator(
-    initialConfiguration: SimulationConfiguration = SimulationConfiguration(),
+    configuration: SimulationConfiguration = SimulationConfiguration(),
     private val onTick: suspend (Location) -> Unit,
     private val onComplete: () -> Unit = {},
     private val onError: (Throwable) -> Unit = {},
     private val backgroundScope: CoroutineScope,
     private val configManager: SimulationConfigurationManager =
-        SimpleSimulationConfigurationManager(initialConfiguration),
+        SimpleSimulationConfigurationManager(configuration),
     private val delayCalculator: SimpleDelayCalculator = SimpleDelayCalculator(
         configManager.configuration,
     ),
@@ -53,7 +52,7 @@ class LocationSimulator(
 
     init {
         backgroundScope.launch {
-            configuration
+            this@LocationSimulator.configuration
                 .drop(1)
                 .collect { newConfig ->
                     Logger.d(TAG, "Configuration changed: $newConfig")
@@ -86,7 +85,7 @@ class LocationSimulator(
     }
 
     private suspend fun runSimulation(simulationStartTime: Long) = supervisorScope {
-        val config = configuration.value
+        val config = this@LocationSimulator.configuration.value
 
         if (config.loopIndefinitely) {
             while (isActive) {
@@ -117,19 +116,13 @@ class LocationSimulator(
     private fun createSimulationFlow(simulationStartTime: Long) =
         dataRepository.snapshot()
             .also { points -> setSize(points.size) }
-            .asIndexedFlow()
-            .retry(retries = 3) { delay(1000); true }
+            .asFlow()
+            .withIndex()
             .onEach { (idx, _) -> updateProgress(idx + 1) }
             .onEach { waitIfPaused() }
             .onEach { (idx, point) -> delayIfNeeded(idx, point) }
             .flatMapLatest { (_, point) -> flow { emit(process(point)) } }
             .map { it.toLocation(simulationStartTime) }
-
-    private fun List<SimulationPoint>.asIndexedFlow() = flow {
-        this@asIndexedFlow.forEachIndexed { idx, point ->
-            emit(IndexedValue(idx, point))
-        }
-    }.buffer(capacity = Channel.Factory.RENDEZVOUS)
 
     private suspend fun delayIfNeeded(
         idx: Int,
