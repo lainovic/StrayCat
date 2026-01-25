@@ -4,19 +4,19 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.lainovic.tomtom.straycat.domain.location.SimulationPoint
+import com.lainovic.tomtom.straycat.domain.simulation.SimulationController
 import com.lainovic.tomtom.straycat.domain.simulation.SimulationDataRepository
 import com.lainovic.tomtom.straycat.domain.simulation.SimulationEvent
 import com.lainovic.tomtom.straycat.domain.simulation.SimulationEventBus
 import com.lainovic.tomtom.straycat.domain.simulation.SimulationState
 import com.lainovic.tomtom.straycat.domain.simulation.SimulationStateRepository
-import com.lainovic.tomtom.straycat.infrastructure.logging.Logger
-import com.lainovic.tomtom.straycat.infrastructure.service.SimulationServiceFacade
+import com.lainovic.tomtom.straycat.infrastructure.logging.AndroidLogger
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-class SimulationPlayerViewModel(
-    private val service: SimulationServiceFacade,
+class PlaybackViewModel(
+    private val controller: SimulationController,
     eventBus: SimulationEventBus,
     private val dataRepository: SimulationDataRepository,
     stateRepository: SimulationStateRepository,
@@ -26,7 +26,7 @@ class SimulationPlayerViewModel(
     val simulationState: StateFlow<SimulationState> = stateRepository.state
 
     init {
-        Logger.d(TAG, "SimulationPlayerViewModel created")
+        AndroidLogger.d(TAG, "PlaybackViewModel created")
         viewModelScope.launch {
             eventBus.events.collect { event ->
                 if (event is SimulationEvent.SimulationProgress) {
@@ -38,86 +38,86 @@ class SimulationPlayerViewModel(
 
     fun startPlaying(simulationPoints: List<SimulationPoint>) {
         if (simulationPoints.isEmpty()) {
-            Logger.e(TAG, "Attempted to start simulation with empty points list, the call is ignored")
+            AndroidLogger.e(TAG, "Attempted to start simulation with empty points list, the call is ignored")
             return
         }
 
-        Logger.d(TAG, "start() called, current state: ${simulationState.value}")
+        AndroidLogger.d(TAG, "start() called, current state: ${simulationState.value}")
         when (simulationState.value) {
             SimulationState.Idle,
             SimulationState.Stopped,
             is SimulationState.Error -> {
                 dataRepository.update(simulationPoints)
-                service.start()
-                Logger.i(TAG, "start() completed")
+                controller.start()
+                AndroidLogger.i(TAG, "start() completed")
             }
 
             is SimulationState.Running,
             is SimulationState.Paused -> {
-                Logger.d(TAG, "Service already running or paused, start() call ignored")
+                AndroidLogger.d(TAG, "Service already running or paused, start() call ignored")
                 return
             }
         }
     }
 
     fun stopPlaying() {
-        Logger.d(TAG, "stop() called, current state: ${simulationState.value}")
+        AndroidLogger.d(TAG, "stop() called, current state: ${simulationState.value}")
         when (simulationState.value) {
             is SimulationState.Running,
             is SimulationState.Paused -> {
-                service.stop()
+                controller.stop()
                 dataRepository.clear()
-                Logger.i(TAG, "stop() completed")
+                AndroidLogger.i(TAG, "stop() completed")
             }
 
             SimulationState.Stopped -> {
-                Logger.d(TAG, "Service already stopped, ensuring data is cleared")
+                AndroidLogger.d(TAG, "Service already stopped, ensuring data is cleared")
                 dataRepository.clear()
             }
 
             SimulationState.Idle -> {
-                Logger.d(TAG, "Service is idle (never started), nothing to stop")
+                AndroidLogger.d(TAG, "Service is idle (never started), nothing to stop")
             }
 
             is SimulationState.Error -> {
-                Logger.d(TAG, "Service in error state, clearing data and attempting cleanup")
-                service.stop() // Try to clean up service
+                AndroidLogger.d(TAG, "Service in error state, clearing data and attempting cleanup")
+                controller.stop() // Try to clean up service
                 dataRepository.clear()
             }
         }
     }
 
     fun pauseOrResume() {
-        Logger.d(TAG, "pauseOrResume() called, current state: ${simulationState.value}")
+        AndroidLogger.d(TAG, "pauseOrResume() called, current state: ${simulationState.value}")
         when (simulationState.value) {
             is SimulationState.Running -> {
-                Logger.d(TAG, "Pausing service")
-                service.pause()
+                AndroidLogger.d(TAG, "Pausing service")
+                controller.pause()
             }
 
             is SimulationState.Paused -> {
-                Logger.d(TAG, "Resuming service")
-                service.resume()
+                AndroidLogger.d(TAG, "Resuming service")
+                controller.resume()
             }
 
             else -> {
-                Logger.d(TAG, "pauseOrResume() called in invalid state: ${simulationState.value}")
+                AndroidLogger.d(TAG, "pauseOrResume() called in invalid state: ${simulationState.value}")
             }
         }
-        Logger.d(TAG, "pauseResume() completed")
+        AndroidLogger.d(TAG, "pauseResume() completed")
     }
 
     override fun onCleared() {
-        Logger.d(TAG, "onCleared() called")
+        AndroidLogger.d(TAG, "onCleared() called")
         super.onCleared()
-        Logger.d(TAG, "onCleared() completed")
+        AndroidLogger.d(TAG, "onCleared() completed")
     }
 
     companion object {
-        val TAG = SimulationPlayerViewModel::class.simpleName!!
+        val TAG = PlaybackViewModel::class.simpleName!!
 
         fun Factory(
-            service: SimulationServiceFacade,
+            controller: SimulationController,
             eventBus: SimulationEventBus,
             dataSource: SimulationDataRepository,
             stateRepository: SimulationStateRepository,
@@ -125,7 +125,7 @@ class SimulationPlayerViewModel(
             return object : ViewModelProvider.Factory {
                 @Suppress("UNCHECKED_CAST")
                 override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                    return SimulationPlayerViewModel(service, eventBus, dataSource, stateRepository) as T
+                    return PlaybackViewModel(controller, eventBus, dataSource, stateRepository) as T
                 }
             }
         }

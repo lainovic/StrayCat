@@ -14,8 +14,8 @@ import com.lainovic.tomtom.straycat.ui.showToast
 import com.lainovic.tomtom.straycat.ui.theme.AppSizes
 
 @Composable
-fun SimulationPlayerControls(
-    viewModel: SimulationPlayerViewModel,
+fun PlaybackControls(
+    viewModel: PlaybackViewModel,
     simulationPoints: List<SimulationPoint>,
     modifier: Modifier = Modifier
 ) {

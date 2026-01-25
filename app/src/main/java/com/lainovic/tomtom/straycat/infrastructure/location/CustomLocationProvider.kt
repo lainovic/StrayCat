@@ -3,7 +3,6 @@ package com.lainovic.tomtom.straycat.infrastructure.location
 import android.Manifest
 import android.location.LocationManager
 import androidx.annotation.RequiresPermission
-import com.lainovic.tomtom.straycat.domain.location.observeLocations
 import com.lainovic.tomtom.straycat.shared.toGeoLocation
 import com.tomtom.sdk.location.GeoLocation
 import com.tomtom.sdk.location.LocationProvider

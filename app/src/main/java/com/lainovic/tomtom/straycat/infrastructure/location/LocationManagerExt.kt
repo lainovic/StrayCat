@@ -1,12 +1,11 @@
-package com.lainovic.tomtom.straycat.domain.location
+package com.lainovic.tomtom.straycat.infrastructure.location
 
 import android.Manifest
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import androidx.annotation.RequiresPermission
-import com.lainovic.tomtom.straycat.infrastructure.location.GpsConfiguration
-import com.lainovic.tomtom.straycat.infrastructure.logging.Logger
+import com.lainovic.tomtom.straycat.infrastructure.logging.AndroidLogger
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -29,7 +28,7 @@ fun LocationManager.observeLocations(
         trySend(location)
     }
 
-    Logger.d(tag, "Requesting location updates for provider=$provider")
+    AndroidLogger.d(tag, "Requesting location updates for provider=$provider")
     requestLocationUpdates(
         provider,
         configuration.minTimeInterval.inWholeMilliseconds,
@@ -39,6 +38,6 @@ fun LocationManager.observeLocations(
 
     awaitClose {
         removeUpdates(listener)
-        Logger.d(tag, "Location updates removed for provider=$provider")
+        AndroidLogger.d(tag, "Location updates removed for provider=$provider")
     }
 }.buffer(capacity = Channel.CONFLATED)

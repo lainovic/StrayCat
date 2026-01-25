@@ -16,6 +16,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lainovic.tomtom.straycat.domain.simulation.SimulationEvent
@@ -35,8 +36,8 @@ fun SimulationScreen(
     locationProvider: LocationProvider,
     modifier: Modifier = Modifier
 ) {
-    val viewModel: SimulationViewModel = viewModel(
-        factory = SimulationViewModel.Factory(
+    val viewModel: DashboardViewModel = viewModel(
+        factory = DashboardViewModel.Factory(
             routePlanner,
             InMemorySimulationEventBus,
         )
@@ -52,13 +53,12 @@ fun SimulationScreen(
     val stateRepository = SimulationStateRepositorySingleton
 
     val snackbarHostState = remember { SnackbarHostState() }
-    SnackbarEffect(snackbarHostState, viewModel)
 
     Scaffold(
         modifier = modifier
     ) { paddingValues ->
         Box(modifier = Modifier.padding(paddingValues)) {
-            SimulationContent(
+            Dashboard(
                 context = context,
                 origin = origin,
                 destination = destination,
@@ -105,6 +105,7 @@ fun SimulationScreen(
     }
 
     ErrorEffect(errorMessage, context)
+    SnackbarEffect(snackbarHostState, viewModel)
 }
 
 @Composable
@@ -122,7 +123,7 @@ private fun ErrorEffect(
 @Composable
 private fun SnackbarEffect(
     snackbarHostState: SnackbarHostState,
-    viewModel: SimulationViewModel,
+    viewModel: DashboardViewModel,
 ) {
     LaunchedEffect(snackbarHostState) {
         viewModel.snackbarMessages.collect { message ->
@@ -139,10 +140,10 @@ private fun SnackbarEffect(
 private fun SimulationSnackbar(data: SnackbarData) =
     Snackbar(
         snackbarData = data,
-        containerColor = AppColors.PrimaryDarker,
-        contentColor = AppColors.OnPrimary,
-        actionColor = AppColors.OnPrimary,
-        dismissActionContentColor = AppColors.OnPrimary,
+        containerColor = AppColors.SurfaceTranslucent,
+        contentColor = AppColors.PrimaryDarker,
+        actionColor = AppColors.PrimaryDarker,
+        dismissActionContentColor = AppColors.PrimaryDarker,
         shape = RoundedCornerShape(AppSizes.SnackbarCornerRadius),
         modifier = Modifier.padding(horizontal = AppSizes.ButtonPadding, vertical = 12.dp)
     )

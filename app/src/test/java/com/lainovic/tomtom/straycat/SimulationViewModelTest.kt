@@ -4,7 +4,7 @@ import android.app.Application
 import androidx.test.core.app.ApplicationProvider
 import com.lainovic.tomtom.straycat.infrastructure.service.SimulationService
 import com.lainovic.tomtom.straycat.domain.simulation.SimulationState
-import com.lainovic.tomtom.straycat.ui.simulation.SimulationPlayerViewModel
+import com.lainovic.tomtom.straycat.ui.simulation.PlaybackViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -21,12 +21,12 @@ import org.robolectric.annotation.Config
 class SimulationViewModelTest {
 
     private lateinit var application: Application
-    private lateinit var viewModel: SimulationPlayerViewModel
+    private lateinit var viewModel: PlaybackViewModel
 
     @Before
     fun setup() {
         application = ApplicationProvider.getApplicationContext()
-        viewModel = SimulationPlayerViewModel(application)
+        viewModel = PlaybackViewModel(application)
     }
 
     @Test

@@ -4,7 +4,7 @@ import com.lainovic.tomtom.straycat.domain.simulation.SimulationEventBus
 import com.lainovic.tomtom.straycat.domain.simulation.SimulationState
 import com.lainovic.tomtom.straycat.domain.simulation.SimulationStateRepository
 import com.lainovic.tomtom.straycat.domain.simulation.SimulationStateTransitions
-import com.lainovic.tomtom.straycat.infrastructure.logging.Logger
+import com.lainovic.tomtom.straycat.infrastructure.logging.AndroidLogger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,7 +21,7 @@ class InMemorySimulationStateRepository(
     override val state: StateFlow<SimulationState> = _state.asStateFlow()
 
     init {
-        Logger.d(TAG, "InMemorySimulationStateRepository initialized, starting event collection")
+        AndroidLogger.d(TAG, "InMemorySimulationStateRepository initialized, starting event collection")
         backgroundScope.launch {
             eventBus.events.collect { event ->
                 _state.update { currentState ->
@@ -29,7 +29,7 @@ class InMemorySimulationStateRepository(
                         currentState = currentState,
                         event = event,
                     )
-                    Logger.d(
+                    AndroidLogger.d(
                         TAG,
                         "State transitioned from $currentState to $newState " +
                                 "on event $event"

@@ -18,7 +18,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-class SimulationViewModel(
+class DashboardViewModel(
     private val routePlanner: RoutePlanner,
     private val eventBus: SimulationEventBus,
 ) : ViewModel() {
@@ -108,7 +108,7 @@ class SimulationViewModel(
             object : ViewModelProvider.Factory {
                 @Suppress("UNCHECKED_CAST")
                 override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                    return SimulationViewModel(routePlanner, eventBus) as T
+                    return DashboardViewModel(routePlanner, eventBus) as T
                 }
             }
     }

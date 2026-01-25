@@ -3,37 +3,38 @@ package com.lainovic.tomtom.straycat.infrastructure.service
 import android.content.Context
 import android.content.Intent
 import com.lainovic.tomtom.straycat.domain.simulation.SimulationConfiguration
-import com.lainovic.tomtom.straycat.infrastructure.logging.Logger
+import com.lainovic.tomtom.straycat.domain.simulation.SimulationController
+import com.lainovic.tomtom.straycat.infrastructure.logging.AndroidLogger
 
 /**
- * Facade for interacting with the location player service.
- * Exposed the commands to the player service (start, stop, pause, resume)
+ * Implementation of [SimulationController] that communicates with the [SimulationService]
+ * via Android Intents.
  */
-class SimulationServiceFacade(
+class ServiceSimulationController(
     private val context: Context,
     private val serviceClass: Class<*>,
-) {
-    fun start() {
-        Logger.d(TAG, "start() called")
+) : SimulationController {
+    override fun start() {
+        AndroidLogger.d(TAG, "start() called")
         sendServiceIntent(SimulationService.ACTION_START)
     }
 
-    fun pause() {
-        Logger.d(TAG, "pause() called")
+    override fun pause() {
+        AndroidLogger.d(TAG, "pause() called")
         sendServiceIntent(SimulationService.ACTION_PAUSE)
     }
 
-    fun resume() {
-        Logger.d(TAG, "resume() called")
+    override fun resume() {
+        AndroidLogger.d(TAG, "resume() called")
         sendServiceIntent(SimulationService.ACTION_RESUME)
     }
 
-    fun stop() {
-        Logger.d(TAG, "stop() called")
+    override fun stop() {
+        AndroidLogger.d(TAG, "stop() called")
         sendServiceIntent(SimulationService.ACTION_STOP)
     }
 
-    fun updateConfiguration(config: SimulationConfiguration) {
+    override fun updateConfiguration(config: SimulationConfiguration) {
         val intent = Intent(context, serviceClass).apply {
             action = SimulationService.Companion.ACTION_UPDATE_CONFIG
             putExtra(SimulationService.Companion.EXTRA_CONFIG, config)
@@ -42,7 +43,7 @@ class SimulationServiceFacade(
     }
 
     private fun sendServiceIntent(action: String) {
-        Logger.d(TAG, "sendServiceIntent: action=$action")
+        AndroidLogger.d(TAG, "sendServiceIntent: action=$action")
         val intent = Intent(context, serviceClass)
             .apply {
                 setAction(action)
@@ -51,6 +52,6 @@ class SimulationServiceFacade(
     }
 
     companion object {
-        val TAG = SimulationServiceFacade::class.simpleName!!
+        val TAG = ServiceSimulationController::class.simpleName!!
     }
 }

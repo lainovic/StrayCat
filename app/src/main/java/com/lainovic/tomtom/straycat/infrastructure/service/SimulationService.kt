@@ -15,7 +15,7 @@ import com.lainovic.tomtom.straycat.domain.simulation.LocationSimulator
 import com.lainovic.tomtom.straycat.domain.simulation.SimulationConfiguration
 import com.lainovic.tomtom.straycat.infrastructure.location.MockLocationProvider
 import com.lainovic.tomtom.straycat.infrastructure.shared.getLocationManager
-import com.lainovic.tomtom.straycat.infrastructure.logging.Logger
+import com.lainovic.tomtom.straycat.infrastructure.logging.AndroidLogger
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -37,101 +37,101 @@ class SimulationService : Service() {
     )
 
     override fun onBind(intent: Intent?): IBinder? {
-        Logger.d(TAG, "onBind() called")
+        AndroidLogger.d(TAG, "onBind() called")
         return null
     }
 
     override fun onCreate() {
         super.onCreate()
-        Logger.d(TAG, "onCreate() called")
+        AndroidLogger.d(TAG, "onCreate() called")
         startForegroundNotification()
         mockLocationProvider.setup()
-        Logger.d(TAG, "onCreate() completed")
+        AndroidLogger.d(TAG, "onCreate() completed")
     }
 
     override fun onStartCommand(
         intent: Intent?,
         flags: Int, startId: Int
     ): Int {
-        Logger.d(TAG, "onStartCommand() called")
-        Logger.d(TAG, "  intent: $intent")
-        Logger.d(TAG, "  action: ${intent?.action}")
-        Logger.d(TAG, "  flags: $flags, startId: $startId")
+        AndroidLogger.d(TAG, "onStartCommand() called")
+        AndroidLogger.d(TAG, "  intent: $intent")
+        AndroidLogger.d(TAG, "  action: ${intent?.action}")
+        AndroidLogger.d(TAG, "  flags: $flags, startId: $startId")
 
         try {
             val action = requireNotNull(intent?.action) {
                 "Intent action is null"
             }
-            Logger.d(TAG, "Processing action: $action")
+            AndroidLogger.d(TAG, "Processing action: $action")
 
             when (action) {
                 ACTION_START -> {
-                    Logger.d(TAG, "ACTION_START: Starting simulation")
+                    AndroidLogger.d(TAG, "ACTION_START: Starting simulation")
                     simulator.start()
-                    Logger.i(TAG, "ACTION_START: Simulation started")
+                    AndroidLogger.i(TAG, "ACTION_START: Simulation started")
                 }
 
                 ACTION_PAUSE -> {
-                    Logger.d(TAG, "ACTION_PAUSE: Pausing simulation")
+                    AndroidLogger.d(TAG, "ACTION_PAUSE: Pausing simulation")
                     simulator.pause()
-                    Logger.i(TAG, "ACTION_PAUSE: Simulation paused")
+                    AndroidLogger.i(TAG, "ACTION_PAUSE: Simulation paused")
                 }
 
                 ACTION_RESUME -> {
-                    Logger.d(TAG, "ACTION_RESUME: Resuming simulation")
+                    AndroidLogger.d(TAG, "ACTION_RESUME: Resuming simulation")
                     simulator.resume()
-                    Logger.i(TAG, "ACTION_RESUME: Simulation resumed")
+                    AndroidLogger.i(TAG, "ACTION_RESUME: Simulation resumed")
                 }
 
                 ACTION_STOP -> {
-                    Logger.d(TAG, "ACTION_STOP: Stopping simulation")
+                    AndroidLogger.d(TAG, "ACTION_STOP: Stopping simulation")
                     simulator.stop()
                     stopSelf()
-                    Logger.i(TAG, "ACTION_STOP: Simulation stopped")
+                    AndroidLogger.i(TAG, "ACTION_STOP: Simulation stopped")
                 }
 
                 ACTION_UPDATE_CONFIG -> {
-                    Logger.d(TAG, "ACTION_UPDATE_CONFIG: Updating configuration")
+                    AndroidLogger.d(TAG, "ACTION_UPDATE_CONFIG: Updating configuration")
                     val config = getConfigFromIntent(intent)
                     updateConfiguration(config)
-                    Logger.i(TAG, "ACTION_UPDATE_CONFIG: Configuration updated to $config")
+                    AndroidLogger.i(TAG, "ACTION_UPDATE_CONFIG: Configuration updated to $config")
                 }
 
                 else -> {
-                    Logger.w(TAG, "Unknown action received: $action")
+                    AndroidLogger.w(TAG, "Unknown action received: $action")
                 }
             }
         } catch (e: Exception) {
-            Logger.e(TAG, "Error in onStartCommand", e)
+            AndroidLogger.e(TAG, "Error in onStartCommand", e)
             stopSelf()
         }
 
-        Logger.d(TAG, "onStartCommand() returning START_STICKY")
+        AndroidLogger.d(TAG, "onStartCommand() returning START_STICKY")
         return START_STICKY
     }
 
     private fun createSimulator(): LocationSimulator {
         val handler = CoroutineExceptionHandler { _, throwable ->
-            Logger.e(TAG, "Exception caught in simulator", throwable)
+            AndroidLogger.e(TAG, "Exception caught in simulator", throwable)
         }
 
         return LocationSimulator(
             onTick = this::onTick,
-            onComplete = { Logger.i(TAG, "Simulation completed") },
+            onComplete = { AndroidLogger.i(TAG, "Simulation completed") },
             backgroundScope = CoroutineScope(
                 backgroundScope.coroutineContext + handler
             )
         ).also {
-            Logger.d(TAG, "LocationSimulator created successfully")
+            AndroidLogger.d(TAG, "LocationSimulator created successfully")
         }
     }
 
     private fun onTick(location: Location) {
         try {
-            Logger.d(TAG, "onTick() called with tick: $location")
+            AndroidLogger.d(TAG, "onTick() called with tick: $location")
             locationManager.setTestProviderLocation(LocationManager.GPS_PROVIDER, location)
         } catch (e: SecurityException) {
-            Logger.e(TAG, "Failed to set mock location", e)
+            AndroidLogger.e(TAG, "Failed to set mock location", e)
         }
     }
 
@@ -153,14 +153,14 @@ class SimulationService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
-        Logger.d(TAG, "onDestroy() called")
+        AndroidLogger.d(TAG, "onDestroy() called")
         simulator.stop()
         mockLocationProvider.cleanup()
-        Logger.d(TAG, "onDestroy() completed")
+        AndroidLogger.d(TAG, "onDestroy() completed")
     }
 
     private fun startForegroundNotification() {
-        Logger.d(TAG, "startForegroundNotification() called")
+        AndroidLogger.d(TAG, "startForegroundNotification() called")
         val channelId = "stray_cat_location_simulation"
 
         val channel = NotificationChannel(
@@ -171,7 +171,7 @@ class SimulationService : Service() {
 
         val manager = getSystemService(NotificationManager::class.java)
         manager.createNotificationChannel(channel)
-        Logger.d(TAG, "Notification channel created")
+        AndroidLogger.d(TAG, "Notification channel created")
 
         val notification = Notification.Builder(this, channelId)
             .setContentTitle("StrayCat")
@@ -183,7 +183,7 @@ class SimulationService : Service() {
     }
 
     private fun startForeground(notification: Notification) {
-        Logger.d(TAG, "startForeground() called")
+        AndroidLogger.d(TAG, "startForeground() called")
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             startForeground(
                 1,
@@ -193,7 +193,7 @@ class SimulationService : Service() {
         } else {
             startForeground(1, notification)
         }
-        Logger.d(TAG, "startForeground() completed")
+        AndroidLogger.d(TAG, "startForeground() completed")
     }
 
     companion object {

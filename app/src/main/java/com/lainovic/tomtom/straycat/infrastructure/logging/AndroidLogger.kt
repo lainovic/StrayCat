@@ -1,8 +1,9 @@
 package com.lainovic.tomtom.straycat.infrastructure.logging
 
 import android.util.Log
+import com.lainovic.tomtom.straycat.domain.logging.Logger
 
-object Logger : LoggerInterface {
+object AndroidLogger : Logger {
     override fun d(tag: String, message: String) {
         Log.d(tag, message)
     }

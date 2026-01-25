@@ -36,7 +36,7 @@
 
         <service
             android:name=".infrastructure.service.SimulationService"
-            android:exported="false"
+            android:exported="true"
             android:foregroundServiceType="location" />
     </application>
 

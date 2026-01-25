@@ -47,7 +47,7 @@ data class SimulationConfiguration(
 }
 
 data class MutableSimulationConfiguration(
-    val useRealisticTiming: Boolean = false,
+    var useRealisticTiming: Boolean = false,
     var delayBetweenEmissions: Duration = 1000.milliseconds,
     var distanceBetweenEmissions: Distance = Distance.ZERO,
     var loopIndefinitely: Boolean = false,

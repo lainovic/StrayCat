@@ -17,15 +17,17 @@ import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import com.lainovic.tomtom.straycat.domain.simulation.SimulationState
-import com.lainovic.tomtom.straycat.ui.simulation.SimulationPlayerViewModel
+import com.lainovic.tomtom.straycat.ui.simulation.PlaybackViewModel
 import com.lainovic.tomtom.straycat.ui.theme.AppColors
 import com.lainovic.tomtom.straycat.ui.theme.AppSizes
 import com.lainovic.tomtom.straycat.ui.toIconAndText
@@ -33,7 +35,7 @@ import com.lainovic.tomtom.straycat.ui.toPlayResumeButtonState
 
 @Composable
 fun PlaybackControls(
-    viewModel: SimulationPlayerViewModel,
+    viewModel: PlaybackViewModel,
     onPauseOrResume: () -> Unit = {},
     onStop: () -> Unit = {},
     modifier: Modifier = Modifier
@@ -49,7 +51,7 @@ fun PlaybackControls(
 
     Surface(
         tonalElevation = AppSizes.TonalElevation,
-        color = AppColors.Surface.copy(alpha = 0.7f),
+        color = AppColors.SurfaceTranslucent,
         shape = RoundedCornerShape(AppSizes.ButtonCornerRadius),
         modifier = modifier
             .width(AppSizes.PlaybackControlsWidth)
@@ -58,7 +60,7 @@ fun PlaybackControls(
         Box(contentAlignment = Alignment.Center) {
             LinearProgressIndicator(
                 progress = { animatedProgress },
-                color = AppColors.Progress,
+                color = AppColors.Primary,
                 trackColor = AppColors.ProgressTrack.copy(alpha = 0f),
                 strokeCap = StrokeCap.Butt,
                 modifier = Modifier.fillMaxSize()
@@ -75,7 +77,7 @@ fun PlaybackControls(
 
                 val pauseResumeButtonColor by animateColorAsState(
                     targetValue = if (isPauseResumeEnabled) {
-                        AppColors.Primary
+                        Color.Transparent
                     } else {
                         AppColors.PrimaryDisabled
                     },
@@ -85,7 +87,7 @@ fun PlaybackControls(
 
                 val pauseResumeContentColor by animateColorAsState(
                     targetValue = if (isPauseResumeEnabled) {
-                        AppColors.OnPrimary
+                        MaterialTheme.colorScheme.primary
                     } else {
                         AppColors.OnDisabled
                     },
@@ -125,8 +127,8 @@ fun PlaybackControls(
                     },
                     enabled = isStopEnabled,
                     colors = IconButtonDefaults.filledIconButtonColors(
-                        containerColor = AppColors.Error,
-                        contentColor = AppColors.OnError,
+                        containerColor = Color.Transparent,
+                        contentColor = AppColors.Error,
                         disabledContainerColor = AppColors.PrimaryDisabled,
                         disabledContentColor = AppColors.OnDisabled
                     ),

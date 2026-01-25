@@ -6,9 +6,10 @@ import androidx.compose.ui.graphics.Color
 object AppColors {
     // Surface colors
     val Surface = Color(0xFFFFFFFF) // Pure white
+    val SurfaceTranslucent = Color(0xFFFFFFFF).copy(alpha = 0.90f)
 
     // Primary colors - TomTom brand blue
-    val Primary = Color(0xFF0077C8) // TomTom blue
+    val Primary = Color(0xFF00A3FF) // Vibrant Electric Blue
     val PrimaryDarker = Color(0xFF005590)
     val PrimaryDisabled = Color(0xFFBDBDBD) // Light gray
     val OnPrimary = Color.White

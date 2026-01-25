@@ -2,7 +2,7 @@ package com.lainovic.tomtom.straycat.infrastructure.location
 
 import com.lainovic.tomtom.straycat.domain.simulation.MutableSimulationConfiguration
 import com.lainovic.tomtom.straycat.domain.simulation.SimulationConfiguration
-import com.lainovic.tomtom.straycat.infrastructure.logging.Logger
+import com.lainovic.tomtom.straycat.infrastructure.logging.AndroidLogger
 import com.lainovic.tomtom.straycat.shared.toImmutable
 import com.lainovic.tomtom.straycat.shared.toMutable
 import com.tomtom.sdk.location.GeoLocation
@@ -24,7 +24,7 @@ class DefaultLocationProviderWrapper(
 
     override fun addOnLocationUpdateListener(listener: OnLocationUpdateListener) {
         val interceptor = OnLocationUpdateListener { location ->
-            Logger.d(TAG, "Intercepted location update: $location")
+            AndroidLogger.d(TAG, "Intercepted location update: $location")
             listener.onLocationUpdate(postProcess(location))
         }
         defaultLocationProvider.addOnLocationUpdateListener(interceptor)

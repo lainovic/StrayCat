@@ -110,9 +110,3 @@ To clear and start over, long-press on the map again after a route has been gene
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-**Built with ❤️ and Kotlin**
-
-**Status:** Testing-Ready  
-**Last Updated:** January 8, 2026  
-**Version:** 1.0
-

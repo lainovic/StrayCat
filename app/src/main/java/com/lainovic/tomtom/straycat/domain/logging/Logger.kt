@@ -1,6 +1,6 @@
-package com.lainovic.tomtom.straycat.infrastructure.logging
+package com.lainovic.tomtom.straycat.domain.logging
 
-interface LoggerInterface {
+interface Logger {
     fun d(tag: String, message: String)
     fun i(tag: String, message: String)
     fun w(tag: String, message: String, throwable: Throwable? = null)

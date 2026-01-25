@@ -3,7 +3,7 @@ package com.lainovic.tomtom.straycat.domain.simulation
 import android.location.Location
 import com.lainovic.tomtom.straycat.domain.location.SimulationPoint
 import com.lainovic.tomtom.straycat.infrastructure.analytics.InMemorySimulationEventBus
-import com.lainovic.tomtom.straycat.infrastructure.logging.Logger
+import com.lainovic.tomtom.straycat.infrastructure.logging.AndroidLogger
 import com.lainovic.tomtom.straycat.infrastructure.simulation.InMemorySimulationDataRepository
 import com.lainovic.tomtom.straycat.shared.toLocation
 import kotlinx.coroutines.CoroutineScope
@@ -55,7 +55,7 @@ class LocationSimulator(
             this@LocationSimulator.configuration
                 .drop(1)
                 .collect { newConfig ->
-                    Logger.d(TAG, "Configuration changed: $newConfig")
+                    AndroidLogger.d(TAG, "Configuration changed: $newConfig")
                     if (collectionJob?.isActive == true) {
                         stop()
                         start()
@@ -65,23 +65,23 @@ class LocationSimulator(
     }
 
     fun start() {
-        Logger.d(TAG, "start() called, collectionJob=${collectionJob}")
+        AndroidLogger.d(TAG, "start() called, collectionJob=${collectionJob}")
         if (collectionJob?.isActive == true) {
-            Logger.d(TAG, "Collection job already active, returning")
+            AndroidLogger.d(TAG, "Collection job already active, returning")
             return
         }
 
         resetPause()
         collectionJob = backgroundScope.launch {
-            Logger.d(TAG, "Simulation coroutine started")
+            AndroidLogger.d(TAG, "Simulation coroutine started")
             val simulationStartTime = System.currentTimeMillis()
             runSimulation(simulationStartTime)
         }
 
         eventBus.pushEvent(SimulationEvent.SimulationStarted)
 
-        Logger.i(TAG, "start() completed")
-        Logger.d(TAG, "collectionJob=$collectionJob")
+        AndroidLogger.i(TAG, "start() completed")
+        AndroidLogger.d(TAG, "collectionJob=$collectionJob")
     }
 
     private suspend fun runSimulation(simulationStartTime: Long) = supervisorScope {
@@ -133,7 +133,7 @@ class LocationSimulator(
     }
 
     fun stop() {
-        Logger.d(TAG, "stop() called, collectionJob=$collectionJob")
+        AndroidLogger.d(TAG, "stop() called, collectionJob=$collectionJob")
         collectionJob?.cancel()
         collectionJob = null
         resetPause()

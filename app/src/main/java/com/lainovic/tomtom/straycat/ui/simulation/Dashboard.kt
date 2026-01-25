@@ -19,20 +19,23 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lainovic.tomtom.straycat.domain.location.SimulationPoint
+import com.lainovic.tomtom.straycat.domain.simulation.SimulationController
 import com.lainovic.tomtom.straycat.domain.simulation.SimulationDataRepository
 import com.lainovic.tomtom.straycat.domain.simulation.SimulationEventBus
 import com.lainovic.tomtom.straycat.domain.simulation.SimulationStateRepository
 import com.lainovic.tomtom.straycat.infrastructure.service.SimulationService
-import com.lainovic.tomtom.straycat.infrastructure.service.SimulationServiceFacade
+import com.lainovic.tomtom.straycat.infrastructure.service.ServiceSimulationController
 import com.lainovic.tomtom.straycat.shared.toMapLocations
-import com.lainovic.tomtom.straycat.ui.components.OpenButton
-import com.lainovic.tomtom.straycat.ui.components.SearchPlacesPanel
+import com.lainovic.tomtom.straycat.ui.components.SearchButton
+import com.lainovic.tomtom.straycat.ui.components.SettingsButton
 import com.lainovic.tomtom.straycat.ui.components.TomTomMap
 import com.lainovic.tomtom.straycat.ui.theme.AppSizes
 import com.tomtom.sdk.location.LocationProvider
+import com.lainovic.tomtom.straycat.infrastructure.simulation.SimulationConfigurationManagerSingleton
+import com.google.android.libraries.places.api.Places
 
 @Composable
-fun SimulationContent(
+fun Dashboard(
     context: Context,
     origin: Location?,
     destination: Location?,
@@ -46,16 +49,32 @@ fun SimulationContent(
     onMapLongPress: (Location) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val service = SimulationServiceFacade(
-        context = context,
-        serviceClass = SimulationService::class.java,
+    val controller: SimulationController = remember(context) {
+        ServiceSimulationController(
+            context = context,
+            serviceClass = SimulationService::class.java,
+        )
+    }
+
+    val playbackViewModel: PlaybackViewModel = viewModel(
+        factory = PlaybackViewModel.Factory(controller, eventBus, dataRepository, stateRepository)
     )
 
-    val viewModel: SimulationPlayerViewModel = viewModel(
-        factory = SimulationPlayerViewModel.Factory(service, eventBus, dataRepository, stateRepository)
+    val settingsViewModel: SettingsViewModel = viewModel(
+        factory = SettingsViewModel.Factory(
+            configurationManager = SimulationConfigurationManagerSingleton,
+            controller = controller
+        )
+    )
+
+    val searchViewModel: SearchViewModel = viewModel(
+        factory = SearchViewModel.Factory(
+            placesClient = Places.createClient(context)
+        )
     )
 
     var isSearchOpen by remember { mutableStateOf(false) }
+    var isSettingsOpen by remember { mutableStateOf(false) }
 
     Box(modifier = modifier.fillMaxSize()) {
         TomTomMap(
@@ -69,17 +88,6 @@ fun SimulationContent(
                 .clip(RoundedCornerShape(12.dp))
         )
 
-
-        SearchPlacesPanel(
-            isOpen = isSearchOpen,
-            onOriginSelected = onOriginSelected,
-            onDestinationSelected = onDestinationSelected,
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .padding(16.dp)
-        )
-
-
         Column(
             horizontalAlignment = Alignment.End,
             verticalArrangement =
@@ -88,15 +96,35 @@ fun SimulationContent(
                 .align(Alignment.BottomEnd)
                 .padding(bottom = 46.dp, end = 32.dp)
         ) {
-            OpenButton(
-                onClick = { isSearchOpen = !isSearchOpen },
+            SettingsButton(
+                onClick = { isSettingsOpen = true },
                 iconSize = AppSizes.ButtonSize,
-                isOpened = isSearchOpen,
             )
 
-            SimulationPlayerControls(
-                viewModel = viewModel,
+            SearchButton(
+                onClick = { isSearchOpen = true },
+                iconSize = AppSizes.ButtonSize,
+            )
+
+            PlaybackControls(
+                viewModel = playbackViewModel,
                 simulationPoints = points,
+            )
+        }
+
+        if (isSettingsOpen) {
+            SettingsPanel(
+                viewModel = settingsViewModel,
+                onDismiss = { isSettingsOpen = false }
+            )
+        }
+
+        if (isSearchOpen) {
+            SearchPanel(
+                viewModel = searchViewModel,
+                onOriginSelected = onOriginSelected,
+                onDestinationSelected = onDestinationSelected,
+                onDismiss = { isSearchOpen = false }
             )
         }
     }
