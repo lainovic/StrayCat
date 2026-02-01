@@ -14,14 +14,6 @@ fun Context.showToast(message: String) {
     Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
 }
 
-fun generateCatSound(): String {
-    val sounds = listOf(
-        "Meow", "Purr", "Mew", "Hiss", "Yowl", "Chirp", "Trill",
-        "Growl", "Screech"
-    )
-    return sounds.random()
-}
-
 fun SimulationState.toPlayResumeButtonState(): PlayResumeButtonState =
     when (this) {
         is SimulationState.Idle -> PlayResumeButtonState.Play

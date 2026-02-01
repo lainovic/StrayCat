@@ -11,8 +11,13 @@ import com.google.android.libraries.places.api.net.FindAutocompletePredictionsRe
 import com.google.android.libraries.places.api.net.PlacesClient
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -23,9 +28,11 @@ class SearchViewModel(
 
     private val _originQuery = MutableStateFlow("")
     val originQuery: StateFlow<String> = _originQuery
+    private val ignoreNextOriginQuery = NextQuery("")
 
     private val _destinationQuery = MutableStateFlow("")
     val destinationQuery: StateFlow<String> = _destinationQuery
+    private var ignoreNextDestinationQuery = NextQuery("")
 
     private val _originPredictions = MutableStateFlow<List<AutocompletePrediction>>(emptyList())
     val originPredictions: StateFlow<List<AutocompletePrediction>> = _originPredictions
@@ -37,32 +44,36 @@ class SearchViewModel(
     private val isSelectingDestination = MutableStateFlow(false)
 
     init {
-        setupSearchFlow(_originQuery, _originPredictions, isSelectingOrigin)
-        setupSearchFlow(_destinationQuery, _destinationPredictions, isSelectingDestination)
+        setupSearchFlow(_originQuery, _originPredictions, isSelectingOrigin, ignoreNextOriginQuery)
+        setupSearchFlow(_destinationQuery, _destinationPredictions, isSelectingDestination, ignoreNextDestinationQuery)
     }
 
     private fun setupSearchFlow(
         queryFlow: MutableStateFlow<String>,
         predictionsFlow: MutableStateFlow<List<AutocompletePrediction>>,
-        isSelectingFlow: MutableStateFlow<Boolean>
+        isSelectingFlow: MutableStateFlow<Boolean>,
+        ignoreNextQuery: NextQuery,
     ) {
-        viewModelScope.launch {
-            queryFlow
-                .debounce(300.milliseconds)
-                .filter { it.length >= 3 }
-                .filter { !isSelectingFlow.value }
-                .distinctUntilChanged()
-                .flatMapLatest { query ->
-                    flow {
-                        emit(searchPredictions(query))
-                    }.catch { emit(emptyList()) }
+        queryFlow
+            .debounce(500.milliseconds)
+            .filter {
+                if (it == ignoreNextQuery.value) {
+                    ignoreNextQuery.value = ""
+                    false
+                } else {
+                    true
                 }
-                .collect { results ->
-                    if (!isSelectingFlow.value) {
-                        predictionsFlow.value = results
-                    }
+            }
+            .filter { it.length >= 3 }
+            .filter { !isSelectingFlow.value }
+            .mapLatest { query ->
+                searchPredictions(query)
+            }
+            .onEach { predictions ->
+                if (!isSelectingFlow.value) {
+                    predictionsFlow.value = predictions
                 }
-        }
+            }.launchIn(viewModelScope)
     }
 
     fun onOriginQueryChanged(query: String) {
@@ -77,6 +88,7 @@ class SearchViewModel(
         isSelectingOrigin.value = true
         _originPredictions.value = emptyList()
         fetchPlace(prediction) { location, name ->
+            ignoreNextOriginQuery.value = name
             _originQuery.value = name
             onLocationSelected(location, name)
             isSelectingOrigin.value = false
@@ -87,6 +99,7 @@ class SearchViewModel(
         isSelectingDestination.value = true
         _destinationPredictions.value = emptyList()
         fetchPlace(prediction) { location, name ->
+            ignoreNextDestinationQuery.value = name
             _destinationQuery.value = name
             onLocationSelected(location, name)
             isSelectingDestination.value = false
@@ -136,4 +149,6 @@ class SearchViewModel(
             return SearchViewModel(placesClient) as T
         }
     }
+
+    private data class NextQuery(var value: String)
 }
