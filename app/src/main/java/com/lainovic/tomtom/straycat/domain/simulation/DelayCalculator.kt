@@ -13,18 +13,28 @@ class SimpleDelayCalculator(
     private var previousElapsedTime = 0L
 
     override fun calculateDelay(idx: Int, point: SimulationPoint): Long {
-        return when {
-            !configuration.value.useRealisticTiming ->
+        val delay = when {
+            !configuration.value.useRealisticTiming -> // fixed delay
                 configuration.value.delayBetweenEmissions.inWholeMilliseconds
 
-            idx == 0 -> 0L
+            idx == 0 -> { // first point, hence no delay
+                val currentElapsedTime = point.elapsedTravelTime?.inWholeMilliseconds ?: 0L
+                previousElapsedTime = currentElapsedTime
+                0L
+            }
 
             else -> {
                 val currentElapsedTime = point.elapsedTravelTime?.inWholeMilliseconds ?: 0L
-                val delta = currentElapsedTime - previousElapsedTime
+                val delta = if (previousElapsedTime > 0L) {
+                    currentElapsedTime - previousElapsedTime
+                } else {
+                    0L
+                }
                 previousElapsedTime = currentElapsedTime
                 delta
             }
         }
+
+        return (delay / configuration.value.speedMultiplier).toLong()
     }
 }

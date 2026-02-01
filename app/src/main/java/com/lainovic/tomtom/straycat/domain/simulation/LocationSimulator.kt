@@ -2,8 +2,8 @@ package com.lainovic.tomtom.straycat.domain.simulation
 
 import android.location.Location
 import com.lainovic.tomtom.straycat.domain.location.SimulationPoint
+import com.lainovic.tomtom.straycat.domain.logging.Logger
 import com.lainovic.tomtom.straycat.infrastructure.analytics.InMemorySimulationEventBus
-import com.lainovic.tomtom.straycat.infrastructure.logging.AndroidLogger
 import com.lainovic.tomtom.straycat.infrastructure.simulation.InMemorySimulationDataRepository
 import com.lainovic.tomtom.straycat.shared.toLocation
 import kotlinx.coroutines.CoroutineScope
@@ -29,6 +29,7 @@ class LocationSimulator(
     private val onComplete: () -> Unit = {},
     private val onError: (Throwable) -> Unit = {},
     private val backgroundScope: CoroutineScope,
+    private val logger: Logger,
     private val configManager: SimulationConfigurationManager =
         SimpleSimulationConfigurationManager(configuration),
     private val delayCalculator: SimpleDelayCalculator = SimpleDelayCalculator(
@@ -39,8 +40,8 @@ class LocationSimulator(
     ),
     private val dataRepository: SimulationDataRepository = InMemorySimulationDataRepository,
     private val eventBus: SimulationEventBus = InMemorySimulationEventBus,
-    private val pauseController: PauseController = SimplePauseController(eventBus),
-    private val progressTracker: ProgressTracker = SimpleProgressTracker(eventBus),
+    private val pauseController: PauseController = SimplePauseController(eventBus, logger),
+    private val progressTracker: ProgressTracker = SimpleProgressTracker(eventBus, logger),
 ) :
     SimulationConfigurationManager by configManager,
     SimulationPointProcessor by simulationPointProcessor,
@@ -55,8 +56,9 @@ class LocationSimulator(
             this@LocationSimulator.configuration
                 .drop(1)
                 .collect { newConfig ->
-                    AndroidLogger.d(TAG, "Configuration changed: $newConfig")
-                    if (collectionJob?.isActive == true) {
+                    logger.d(TAG, "Configuration changed: $newConfig")
+                    if (collectionJob?.isActive == true && shouldRestart(newConfig)) {
+                        logger.i(TAG, "Restarting simulation due to structural configuration change")
                         stop()
                         start()
                     }
@@ -64,24 +66,32 @@ class LocationSimulator(
         }
     }
 
+    private fun shouldRestart(newConfig: SimulationConfiguration): Boolean {
+        // Only restart if loopIndefinitely or useRealisticTiming changed.
+        // Other parameters (speed, noise, delay) are handled live by processors and calculators.
+        val currentConfig = configManager.configuration.value
+        return currentConfig.loopIndefinitely != newConfig.loopIndefinitely ||
+                currentConfig.useRealisticTiming != newConfig.useRealisticTiming
+    }
+
     fun start() {
-        AndroidLogger.d(TAG, "start() called, collectionJob=${collectionJob}")
+        logger.d(TAG, "start() called, collectionJob=${collectionJob}")
         if (collectionJob?.isActive == true) {
-            AndroidLogger.d(TAG, "Collection job already active, returning")
+            logger.d(TAG, "Collection job already active, returning")
             return
         }
 
         resetPause()
         collectionJob = backgroundScope.launch {
-            AndroidLogger.d(TAG, "Simulation coroutine started")
+            logger.d(TAG, "Simulation coroutine started")
             val simulationStartTime = System.currentTimeMillis()
             runSimulation(simulationStartTime)
         }
 
         eventBus.pushEvent(SimulationEvent.SimulationStarted)
 
-        AndroidLogger.i(TAG, "start() completed")
-        AndroidLogger.d(TAG, "collectionJob=$collectionJob")
+        logger.i(TAG, "start() completed")
+        logger.d(TAG, "collectionJob=$collectionJob")
     }
 
     private suspend fun runSimulation(simulationStartTime: Long) = supervisorScope {
@@ -133,7 +143,7 @@ class LocationSimulator(
     }
 
     fun stop() {
-        AndroidLogger.d(TAG, "stop() called, collectionJob=$collectionJob")
+        logger.d(TAG, "stop() called, collectionJob=$collectionJob")
         collectionJob?.cancel()
         collectionJob = null
         resetPause()

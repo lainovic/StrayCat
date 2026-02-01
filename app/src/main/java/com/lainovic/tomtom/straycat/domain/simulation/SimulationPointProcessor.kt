@@ -11,18 +11,17 @@ class SimpleSimulationPointProcessor(
     private val configuration: StateFlow<SimulationConfiguration>,
 ) : SimulationPointProcessor {
 
-    private val processors = buildList {
-        val config = configuration.value
-        add(BearingProcessor())
-        if (config.noiseLevelInMeters > 0) {
-            add(NoiseProcessor(config.noiseLevelInMeters))
-        }
-    }
+    private val bearingProcessor = BearingProcessor()
 
     override fun process(point: SimulationPoint): SimulationPoint {
-        return processors.fold(point) { current, processor ->
-            processor.process(current)
+        val config = configuration.value
+        var processedPoint = bearingProcessor.process(point)
+
+        if (config.noiseLevelInMeters > 0) {
+            processedPoint = NoiseProcessor(config.noiseLevelInMeters).process(processedPoint)
         }
+
+        return processedPoint
     }
 }
 

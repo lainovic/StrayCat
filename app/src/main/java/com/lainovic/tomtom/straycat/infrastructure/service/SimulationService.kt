@@ -14,8 +14,9 @@ import com.lainovic.tomtom.straycat.R
 import com.lainovic.tomtom.straycat.domain.simulation.LocationSimulator
 import com.lainovic.tomtom.straycat.domain.simulation.SimulationConfiguration
 import com.lainovic.tomtom.straycat.infrastructure.location.MockLocationProvider
-import com.lainovic.tomtom.straycat.infrastructure.shared.getLocationManager
 import com.lainovic.tomtom.straycat.infrastructure.logging.AndroidLogger
+import com.lainovic.tomtom.straycat.infrastructure.shared.getLocationManager
+import com.lainovic.tomtom.straycat.infrastructure.simulation.SimulationConfigurationManagerSingleton
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -90,13 +91,6 @@ class SimulationService : Service() {
                     AndroidLogger.i(TAG, "ACTION_STOP: Simulation stopped")
                 }
 
-                ACTION_UPDATE_CONFIG -> {
-                    AndroidLogger.d(TAG, "ACTION_UPDATE_CONFIG: Updating configuration")
-                    val config = getConfigFromIntent(intent)
-                    updateConfiguration(config)
-                    AndroidLogger.i(TAG, "ACTION_UPDATE_CONFIG: Configuration updated to $config")
-                }
-
                 else -> {
                     AndroidLogger.w(TAG, "Unknown action received: $action")
                 }
@@ -119,8 +113,10 @@ class SimulationService : Service() {
             onTick = this::onTick,
             onComplete = { AndroidLogger.i(TAG, "Simulation completed") },
             backgroundScope = CoroutineScope(
-                backgroundScope.coroutineContext + handler
-            )
+                backgroundScope.coroutineContext + handler + CoroutineName("LocationSimulatorScope")
+            ),
+            configManager = SimulationConfigurationManagerSingleton,
+            logger = AndroidLogger,
         ).also {
             AndroidLogger.d(TAG, "LocationSimulator created successfully")
         }
@@ -133,22 +129,6 @@ class SimulationService : Service() {
         } catch (e: SecurityException) {
             AndroidLogger.e(TAG, "Failed to set mock location", e)
         }
-    }
-
-    private fun updateConfiguration(config: SimulationConfiguration) {
-        simulator.update(config)
-    }
-
-    private fun getConfigFromIntent(intent: Intent): SimulationConfiguration {
-        val config =
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                intent.getParcelableExtra(EXTRA_CONFIG, SimulationConfiguration::class.java)
-            } else {
-                @Suppress("DEPRECATION")
-                intent.getParcelableExtra(EXTRA_CONFIG)
-            } ?: throw IllegalArgumentException("Missing or invalid configuration extra")
-
-        return config
     }
 
     override fun onDestroy() {
@@ -202,7 +182,5 @@ class SimulationService : Service() {
         const val ACTION_STOP = "com.lainovic.tomtom.straycat.action.STOP"
         const val ACTION_PAUSE = "com.lainovic.tomtom.straycat.action.PAUSE"
         const val ACTION_RESUME = "com.lainovic.tomtom.straycat.action.RESUME"
-        const val ACTION_UPDATE_CONFIG = "com.lainovic.tomtom.straycat.action.UPDATE_CONFIG"
-        const val EXTRA_CONFIG = "com.lainovic.tomtom.straycat.extra.CONFIG"
     }
 }

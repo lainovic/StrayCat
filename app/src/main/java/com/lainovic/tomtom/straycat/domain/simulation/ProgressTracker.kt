@@ -1,6 +1,6 @@
 package com.lainovic.tomtom.straycat.domain.simulation
 
-import com.lainovic.tomtom.straycat.infrastructure.logging.AndroidLogger
+import com.lainovic.tomtom.straycat.domain.logging.Logger
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -13,6 +13,7 @@ interface ProgressTracker {
 
 class SimpleProgressTracker(
     private val eventBus: SimulationEventBus,
+    private val logger: Logger,
 ) : ProgressTracker {
     private val _progress = MutableStateFlow(0f)
     override val progress: StateFlow<Float> = _progress
@@ -22,7 +23,7 @@ class SimpleProgressTracker(
         require(size > 0 && current <= size) {
             "Invalid progress update: current=$current, size=$size"
         }
-        AndroidLogger.d(TAG, "updateProgress() called with: $current/$size")
+        logger.d(TAG, "updateProgress() called with: $current/$size")
 
         _progress.value = current.toFloat() / size
         eventBus.pushEvent(SimulationEvent.SimulationProgress(_progress.value))

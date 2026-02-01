@@ -8,8 +8,7 @@ import kotlinx.coroutines.flow.update
 
 interface SimulationConfigurationManager {
     val configuration: StateFlow<SimulationConfiguration>
-    fun update(newConfig: SimulationConfiguration)
-    fun update(block: (MutableSimulationConfiguration) -> Unit)
+    fun update(block: MutableSimulationConfiguration.() -> Unit)
 }
 
 class SimpleSimulationConfigurationManager(
@@ -18,11 +17,7 @@ class SimpleSimulationConfigurationManager(
     private val _configuration = MutableStateFlow(initialConfiguration)
     override val configuration: StateFlow<SimulationConfiguration> = _configuration
 
-    override fun update(newConfig: SimulationConfiguration) {
-        _configuration.value = newConfig
-    }
-
-    override fun update(block: (MutableSimulationConfiguration) -> Unit) {
+    override fun update(block: MutableSimulationConfiguration.() -> Unit) {
         _configuration.update { currentConfig ->
             currentConfig
                 .toMutable()

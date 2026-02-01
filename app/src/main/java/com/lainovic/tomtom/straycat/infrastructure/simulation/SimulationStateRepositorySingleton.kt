@@ -2,6 +2,7 @@ package com.lainovic.tomtom.straycat.infrastructure.simulation
 
 import com.lainovic.tomtom.straycat.domain.simulation.SimulationStateRepository
 import com.lainovic.tomtom.straycat.infrastructure.analytics.InMemorySimulationEventBus
+import com.lainovic.tomtom.straycat.infrastructure.logging.AndroidLogger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -12,6 +13,7 @@ import kotlinx.coroutines.SupervisorJob
  */
 object SimulationStateRepositorySingleton : SimulationStateRepository by InMemorySimulationStateRepository(
     eventBus = InMemorySimulationEventBus,
-    backgroundScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    backgroundScope = CoroutineScope(SupervisorJob() + Dispatchers.Default),
+    logger = AndroidLogger,
 )
 

@@ -18,7 +18,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.lainovic.tomtom.straycat.shared.update
 import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -51,7 +50,7 @@ fun SettingsPanel(
                 label = "Realistic Timing",
                 checked = config.useRealisticTiming,
                 onCheckedChange = { value ->
-                    viewModel.updateConfiguration(config.update { useRealisticTiming = value })
+                    viewModel.updateConfiguration { useRealisticTiming = value }
                 }
             )
 
@@ -61,9 +60,9 @@ fun SettingsPanel(
                     value = config.delayBetweenEmissions.inWholeMilliseconds.toFloat(),
                     valueRange = 100f..5000f,
                     onValueChange = { value ->
-                        viewModel.updateConfiguration(config.update {
+                        viewModel.updateConfiguration {
                             delayBetweenEmissions = value.toLong().milliseconds
-                        })
+                        }
                     }
                 )
             }
@@ -72,7 +71,7 @@ fun SettingsPanel(
                 label = "Loop Indefinitely",
                 checked = config.loopIndefinitely,
                 onCheckedChange = { value ->
-                    viewModel.updateConfiguration(config.update { loopIndefinitely = value })
+                    viewModel.updateConfiguration { loopIndefinitely = value }
                 }
             )
 
@@ -81,7 +80,7 @@ fun SettingsPanel(
                 value = config.speedMultiplier,
                 valueRange = 0.1f..10f,
                 onValueChange = { value ->
-                    viewModel.updateConfiguration(config.update { speedMultiplier = value })
+                    viewModel.updateConfiguration { speedMultiplier = value }
                 }
             )
 
@@ -90,7 +89,7 @@ fun SettingsPanel(
                 value = config.noiseLevelInMeters,
                 valueRange = 0f..50f,
                 onValueChange = { value ->
-                    viewModel.updateConfiguration(config.update { noiseLevelInMeters = value })
+                    viewModel.updateConfiguration { noiseLevelInMeters = value }
                 }
             )
         }

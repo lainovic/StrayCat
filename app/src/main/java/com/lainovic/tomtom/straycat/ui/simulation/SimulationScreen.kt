@@ -16,9 +16,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.lainovic.tomtom.straycat.domain.logging.Logger
+import com.lainovic.tomtom.straycat.domain.simulation.SimulationConfigurationManager
 import com.lainovic.tomtom.straycat.domain.simulation.SimulationEvent
 import com.lainovic.tomtom.straycat.infrastructure.analytics.InMemorySimulationEventBus
 import com.lainovic.tomtom.straycat.infrastructure.simulation.InMemorySimulationDataRepository
@@ -34,6 +35,8 @@ fun SimulationScreen(
     context: Context,
     routePlanner: RoutePlanner,
     locationProvider: LocationProvider,
+    configurationManager: SimulationConfigurationManager,
+    logger: Logger,
     modifier: Modifier = Modifier
 ) {
     val viewModel: DashboardViewModel = viewModel(
@@ -67,6 +70,7 @@ fun SimulationScreen(
                 eventBus = eventBus,
                 dataRepository = dataRepository,
                 stateRepository = stateRepository,
+                configurationManager = configurationManager,
                 onOriginSelected = { location, _ ->
                     viewModel.setOrigin(location)
                     eventBus.pushEvent(SimulationEvent.OriginSet(location))
@@ -75,6 +79,7 @@ fun SimulationScreen(
                     viewModel.setDestination(location)
                     eventBus.pushEvent(SimulationEvent.DestinationSet(location))
                 },
+                logger = logger,
                 onMapLongPress = { location ->
                     when {
                         origin == null -> {
@@ -140,7 +145,7 @@ private fun SnackbarEffect(
 private fun SimulationSnackbar(data: SnackbarData) =
     Snackbar(
         snackbarData = data,
-        containerColor = AppColors.SurfaceTranslucent,
+        containerColor = AppColors.Surface,
         contentColor = AppColors.PrimaryDarker,
         actionColor = AppColors.PrimaryDarker,
         dismissActionContentColor = AppColors.PrimaryDarker,

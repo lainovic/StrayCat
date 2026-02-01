@@ -1,6 +1,6 @@
 package com.lainovic.tomtom.straycat.domain.simulation
 
-import com.lainovic.tomtom.straycat.infrastructure.logging.AndroidLogger
+import com.lainovic.tomtom.straycat.domain.logging.Logger
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 
@@ -13,6 +13,7 @@ interface PauseController {
 
 class SimplePauseController(
     private val eventBus: SimulationEventBus,
+    private val logger: Logger,
 ) : PauseController {
     private val _isPaused = MutableStateFlow(false)
 
@@ -24,19 +25,19 @@ class SimplePauseController(
 
     override fun pause() {
         _isPaused.value = true
-        AndroidLogger.i(TAG, "Paused")
+        logger.i(TAG, "Paused")
         eventBus.pushEvent(SimulationEvent.SimulationPaused)
     }
 
     override fun resume() {
         _isPaused.value = false
-        AndroidLogger.i(TAG, "Resumed")
+        logger.i(TAG, "Resumed")
         eventBus.pushEvent(SimulationEvent.SimulationResumed)
     }
 
     override fun resetPause() {
         _isPaused.value = false
-        AndroidLogger.i(TAG, "Reset")
+        logger.i(TAG, "Reset")
     }
 
     private companion object {

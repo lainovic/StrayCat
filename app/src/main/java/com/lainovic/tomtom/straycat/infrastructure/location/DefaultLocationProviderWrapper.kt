@@ -43,7 +43,7 @@ class DefaultLocationProviderWrapper(
         _configuration.apply(configBlock)
     }
 
-    private fun postProcess(location: com.tomtom.sdk.location.GeoLocation): com.tomtom.sdk.location.GeoLocation {
+    private fun postProcess(location: GeoLocation): GeoLocation {
         var result = location
 
         if (result.course == null) {
@@ -67,9 +67,9 @@ class DefaultLocationProviderWrapper(
     }
 
     private fun calculateCourse(
-        from: com.tomtom.sdk.location.GeoLocation,
-        to: com.tomtom.sdk.location.GeoLocation
-    ): com.tomtom.sdk.location.GeoLocation {
+        from: GeoLocation,
+        to: GeoLocation
+    ): GeoLocation {
         val lat1 = Math.toRadians(from.position.latitude)
         val lon1 = Math.toRadians(from.position.longitude)
         val lat2 = Math.toRadians(to.position.latitude)
@@ -81,7 +81,7 @@ class DefaultLocationProviderWrapper(
                 _root_ide_package_.kotlin.math.sin(lat1) * _root_ide_package_.kotlin.math.cos(lat2) * _root_ide_package_.kotlin.math.cos(dLon)
 
         val heading = (Math.toDegrees(_root_ide_package_.kotlin.math.atan2(y, x)) + 360) % 360
-        return _root_ide_package_.com.tomtom.sdk.location.GeoLocation(
+        return GeoLocation(
             position = to.position,
             accuracy = to.accuracy,
             speed = to.speed,

@@ -9,3 +9,4 @@ import com.lainovic.tomtom.straycat.domain.simulation.SimulationConfigurationMan
  */
 object SimulationConfigurationManagerSingleton : SimulationConfigurationManager
 by SimpleSimulationConfigurationManager()
+

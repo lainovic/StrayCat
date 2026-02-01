@@ -18,21 +18,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.android.libraries.places.api.Places
 import com.lainovic.tomtom.straycat.domain.location.SimulationPoint
+import com.lainovic.tomtom.straycat.domain.logging.Logger
+import com.lainovic.tomtom.straycat.domain.simulation.SimulationConfigurationManager
 import com.lainovic.tomtom.straycat.domain.simulation.SimulationController
 import com.lainovic.tomtom.straycat.domain.simulation.SimulationDataRepository
 import com.lainovic.tomtom.straycat.domain.simulation.SimulationEventBus
 import com.lainovic.tomtom.straycat.domain.simulation.SimulationStateRepository
-import com.lainovic.tomtom.straycat.infrastructure.service.SimulationService
 import com.lainovic.tomtom.straycat.infrastructure.service.ServiceSimulationController
+import com.lainovic.tomtom.straycat.infrastructure.service.SimulationService
 import com.lainovic.tomtom.straycat.shared.toMapLocations
 import com.lainovic.tomtom.straycat.ui.components.SearchButton
 import com.lainovic.tomtom.straycat.ui.components.SettingsButton
 import com.lainovic.tomtom.straycat.ui.components.TomTomMap
 import com.lainovic.tomtom.straycat.ui.theme.AppSizes
 import com.tomtom.sdk.location.LocationProvider
-import com.lainovic.tomtom.straycat.infrastructure.simulation.SimulationConfigurationManagerSingleton
-import com.google.android.libraries.places.api.Places
 
 @Composable
 fun Dashboard(
@@ -44,6 +45,8 @@ fun Dashboard(
     eventBus: SimulationEventBus,
     dataRepository: SimulationDataRepository,
     stateRepository: SimulationStateRepository,
+    configurationManager: SimulationConfigurationManager,
+    logger: Logger,
     onOriginSelected: (Location, String) -> Unit,
     onDestinationSelected: (Location, String) -> Unit,
     onMapLongPress: (Location) -> Unit,
@@ -53,17 +56,17 @@ fun Dashboard(
         ServiceSimulationController(
             context = context,
             serviceClass = SimulationService::class.java,
+            logger = logger,
         )
     }
 
     val playbackViewModel: PlaybackViewModel = viewModel(
-        factory = PlaybackViewModel.Factory(controller, eventBus, dataRepository, stateRepository)
+        factory = PlaybackViewModel.Factory(controller, dataRepository, logger, stateRepository, eventBus)
     )
 
     val settingsViewModel: SettingsViewModel = viewModel(
         factory = SettingsViewModel.Factory(
-            configurationManager = SimulationConfigurationManagerSingleton,
-            controller = controller
+            configurationManager = configurationManager,
         )
     )
 
