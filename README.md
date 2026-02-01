@@ -33,33 +33,17 @@ Perfect for testing location-based features and route simulations.
 - 🔄 **Map display** - via TomTom Maps SDK
 - 🔍 **Search Locations** - Find points of interest using Google Places Search SDK
 
-#### GPS Configuration
-- **Minimum Time Interval** - Minimum time between location updates
-- **Minimum Distance** - Minimum distance for location updates
-
-#### Simulation Configuration (TODO)
+#### Simulation Configuration
 - **Speed Multiplier** - Control playback speed (0.1x - 10x)
-- **Loop Mode** - Continuously replay routes
+or
+- **Delay** - Add a delay between location updates (in seconds)
+- **Loop Mode** - Continuously replay the simulation
 - **Realistic Timing** - Use actual route timing vs fixed intervals
-- **Interpolation** - Smooth transitions between points
-- **Noise Level** - Add GPS signal variance (meters)
-
-## Tech Stack
-
-- **Language:** Kotlin 2.0.21
-- **UI:** Jetpack Compose
-- **Maps:** TomTom Maps SDK
-- **Routing:** TomTom Routing SDK
-- **Places Search:** Google Places Search SDK
-- **Async:** Kotlin Coroutines & Flow
-- **Architecture:** MVVM + Clean Architecture adhering to DDD principles
-- **Min SDK:** Android 8.0 (API 26)
+- **Noise Level** - Add GPS signal variance (in meters)
 
 ## Getting Started
 
 ### Prerequisites
-
-- Android Studio Hedgehog or later
 - Android device or emulator with API 26+
 - Location permissions enabled
 
@@ -84,24 +68,22 @@ To begin simulation, long-press on the map to set origin and destination points,
 
 To clear and start over, long-press on the map again after a route has been generated.
 
-## Documentation
-
 ## Roadmap
 
-### v1.0 (Current)
+### v1.2 (Current)
 - ✅ Route simulation with replay
 - ✅ GPS location tracking
 - ✅ Pause/resume functionality
 - ✅ Speed control and looping
 - ✅ Error handling and recovery
 - ✅ Start with documentation
+- ✅ Speed multiplier UI
+- ✅ Loop mode toggle
+- ✅ Realistic timing option
+- ✅ GPS noise injection
 
 ### TODO
-- 🚧 Speed multiplier UI
-- 🚧 Loop mode toggle
-- 🚧 Realistic timing option
-- 🚧 GPS noise injection
-- 🚧 Route interpolation (maybe)
+
 - 🚧 More elaborate testing strategy
 - 🚧 Enhanced UI controls
 - 🚧 Comprehensive documentation

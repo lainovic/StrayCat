@@ -34,7 +34,7 @@ class SimulationService : Service() {
     private val simulator by lazy { createSimulator() }
     private val backgroundScope = CoroutineScope(
         Dispatchers.Default +
-                CoroutineName("LocationPlayerServiceScope")
+                CoroutineName("SimulationServiceBackgroundScope")
     )
 
     override fun onBind(intent: Intent?): IBinder? {
@@ -54,17 +54,19 @@ class SimulationService : Service() {
         intent: Intent?,
         flags: Int, startId: Int
     ): Int {
+        if (intent?.action == null) {
+            AndroidLogger.w(TAG, "Received onStartCommand with null action")
+            return START_STICKY
+        }
+
         AndroidLogger.d(TAG, "onStartCommand() called")
         AndroidLogger.d(TAG, "  intent: $intent")
         AndroidLogger.d(TAG, "  action: ${intent?.action}")
         AndroidLogger.d(TAG, "  flags: $flags, startId: $startId")
 
+        val action = intent.action
         try {
-            val action = requireNotNull(intent?.action) {
-                "Intent action is null"
-            }
             AndroidLogger.d(TAG, "Processing action: $action")
-
             when (action) {
                 ACTION_START -> {
                     AndroidLogger.d(TAG, "ACTION_START: Starting simulation")
@@ -113,7 +115,7 @@ class SimulationService : Service() {
             onTick = this::onTick,
             onComplete = { AndroidLogger.i(TAG, "Simulation completed") },
             backgroundScope = CoroutineScope(
-                backgroundScope.coroutineContext + handler + CoroutineName("LocationSimulatorScope")
+                backgroundScope.coroutineContext + handler
             ),
             configManager = SimulationConfigurationManagerSingleton,
             logger = AndroidLogger,

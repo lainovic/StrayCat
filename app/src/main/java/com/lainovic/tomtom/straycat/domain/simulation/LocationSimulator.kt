@@ -6,6 +6,7 @@ import com.lainovic.tomtom.straycat.domain.logging.Logger
 import com.lainovic.tomtom.straycat.infrastructure.analytics.InMemorySimulationEventBus
 import com.lainovic.tomtom.straycat.infrastructure.simulation.InMemorySimulationDataRepository
 import com.lainovic.tomtom.straycat.shared.toLocation
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -13,9 +14,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.drop
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.withIndex
@@ -36,7 +36,8 @@ class LocationSimulator(
         configManager.configuration,
     ),
     private val simulationPointProcessor: SimulationPointProcessor = SimpleSimulationPointProcessor(
-        configManager.configuration,
+        configuration = configManager.configuration,
+        backgroundScope = backgroundScope,
     ),
     private val dataRepository: SimulationDataRepository = InMemorySimulationDataRepository,
     private val eventBus: SimulationEventBus = InMemorySimulationEventBus,
@@ -52,26 +53,13 @@ class LocationSimulator(
     private var collectionJob: Job? = null
 
     init {
-        backgroundScope.launch {
+        backgroundScope.launch(CoroutineName("LocationSimulatorConfigObserver")) {
             this@LocationSimulator.configuration
                 .drop(1)
                 .collect { newConfig ->
                     logger.d(TAG, "Configuration changed: $newConfig")
-                    if (collectionJob?.isActive == true && shouldRestart(newConfig)) {
-                        logger.i(TAG, "Restarting simulation due to structural configuration change")
-                        stop()
-                        start()
-                    }
                 }
         }
-    }
-
-    private fun shouldRestart(newConfig: SimulationConfiguration): Boolean {
-        // Only restart if loopIndefinitely or useRealisticTiming changed.
-        // Other parameters (speed, noise, delay) are handled live by processors and calculators.
-        val currentConfig = configManager.configuration.value
-        return currentConfig.loopIndefinitely != newConfig.loopIndefinitely ||
-                currentConfig.useRealisticTiming != newConfig.useRealisticTiming
     }
 
     fun start() {
@@ -131,7 +119,7 @@ class LocationSimulator(
             .onEach { (idx, _) -> updateProgress(idx + 1) }
             .onEach { waitIfPaused() }
             .onEach { (idx, point) -> delayIfNeeded(idx, point) }
-            .flatMapLatest { (_, point) -> flow { emit(process(point)) } }
+            .mapLatest { (_, point) -> process(point) }
             .map { it.toLocation(simulationStartTime) }
 
     private suspend fun delayIfNeeded(

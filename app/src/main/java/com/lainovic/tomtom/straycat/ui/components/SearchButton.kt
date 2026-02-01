@@ -35,7 +35,7 @@ fun SearchButton(
             shape = CircleShape,
             colors = IconButtonDefaults.filledIconButtonColors(
                 containerColor = AppColors.SurfaceTranslucent,
-                contentColor = MaterialTheme.colorScheme.primary
+                contentColor = AppColors.PrimaryDarker,
             ),
             modifier = Modifier.size(iconSize)
         ) {
