@@ -5,7 +5,7 @@ import androidx.test.core.app.ApplicationProvider
 import com.lainovic.tomtom.straycat.domain.logging.Logger
 import com.lainovic.tomtom.straycat.domain.simulation.SimulationState
 import com.lainovic.tomtom.straycat.infrastructure.analytics.InMemorySimulationEventBus
-import com.lainovic.tomtom.straycat.infrastructure.service.ServiceSimulationController
+import com.lainovic.tomtom.straycat.infrastructure.service.ServicePlaybackCommands
 import com.lainovic.tomtom.straycat.infrastructure.service.SimulationService
 import com.lainovic.tomtom.straycat.infrastructure.simulation.InMemoryRouteTrackStore
 import com.lainovic.tomtom.straycat.infrastructure.simulation.AppGraph
@@ -38,7 +38,7 @@ class SimulationViewModelTest {
     @Before
     fun setup() {
         application = ApplicationProvider.getApplicationContext()
-        val controller = ServiceSimulationController(
+        val controller = ServicePlaybackCommands(
             context = application,
             serviceClass = SimulationService::class.java,
             logger = noOpLogger,
