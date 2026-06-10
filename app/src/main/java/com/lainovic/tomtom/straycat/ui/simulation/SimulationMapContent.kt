@@ -99,6 +99,9 @@ fun SimulationMapContent(
                 },
                 onPauseOrResume = playbackViewModel::pauseResume,
                 onStop = playbackViewModel::stopPlaying,
+                onScrubStart = playbackViewModel::onScrubStart,
+                onScrub = playbackViewModel::onScrub,
+                onScrubEnd = playbackViewModel::onScrubEnd,
             )
         }
 

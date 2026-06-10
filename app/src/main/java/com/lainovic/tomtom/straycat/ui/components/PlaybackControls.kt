@@ -3,6 +3,8 @@ package com.lainovic.tomtom.straycat.ui.components
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -21,10 +23,16 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
 import com.lainovic.tomtom.straycat.domain.simulation.SimulationState
 import com.lainovic.tomtom.straycat.ui.theme.AppColors
 import com.lainovic.tomtom.straycat.ui.theme.AppSizes
@@ -37,6 +45,9 @@ fun PlaybackControls(
     simulationState: SimulationState,
     onPauseOrResume: () -> Unit,
     onStop: () -> Unit,
+    onScrubStart: () -> Unit,
+    onScrub: (Float) -> Unit,
+    onScrubEnd: (Float) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val animatedProgress by animateFloatAsState(
@@ -53,7 +64,14 @@ fun PlaybackControls(
             .width(AppSizes.PlaybackControlsWidth)
             .height(AppSizes.PlaybackControlsHeight)
     ) {
-        Box(contentAlignment = Alignment.Center) {
+        val seekEnabled = simulationState is SimulationState.Running
+        var widthPx by remember { mutableIntStateOf(0) }
+        var lastFraction by remember { mutableFloatStateOf(progress) }
+
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier.onSizeChanged { widthPx = it.width }
+        ) {
             LinearProgressIndicator(
                 progress = { animatedProgress },
                 color = AppColors.Primary,
@@ -113,6 +131,30 @@ fun PlaybackControls(
                 ) {
                     Icon(imageVector = Icons.Filled.Stop, contentDescription = "Stop", modifier = Modifier.size(AppSizes.IconSize))
                 }
+            }
+
+            if (seekEnabled && widthPx > 0) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .pointerInput(Unit) {
+                            detectTapGestures { offset ->
+                                val f = (offset.x / widthPx).coerceIn(0f, 1f)
+                                onScrubStart()
+                                onScrubEnd(f)
+                            }
+                        }
+                        .pointerInput(Unit) {
+                            detectHorizontalDragGestures(
+                                onDragStart = { onScrubStart() },
+                                onDragEnd = { onScrubEnd(lastFraction) },
+                                onHorizontalDrag = { change, _ ->
+                                    lastFraction = (change.position.x / widthPx).coerceIn(0f, 1f)
+                                    onScrub(lastFraction)
+                                }
+                            )
+                        }
+                )
             }
         }
     }

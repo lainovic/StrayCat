@@ -17,6 +17,9 @@ fun PlaybackControlsSwitcher(
     onPlay: () -> Unit,
     onPauseOrResume: () -> Unit,
     onStop: () -> Unit,
+    onScrubStart: () -> Unit,
+    onScrub: (Float) -> Unit,
+    onScrubEnd: (Float) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val state by simulationState.collectAsState()
@@ -30,6 +33,9 @@ fun PlaybackControlsSwitcher(
             simulationState = state,
             onPauseOrResume = onPauseOrResume,
             onStop = onStop,
+            onScrubStart = onScrubStart,
+            onScrub = onScrub,
+            onScrubEnd = onScrubEnd,
             modifier = modifier,
         )
     } else {
