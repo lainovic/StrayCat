@@ -21,8 +21,11 @@ import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.withIndex
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 class LocationSimulator(
     configuration: SimulationConfiguration = SimulationConfiguration(),
@@ -54,6 +57,9 @@ class LocationSimulator(
         onLocation = onLocation,
         backgroundScope = backgroundScope,
     )
+
+    private var startIndex = 0
+    private val seekMutex = Mutex()
 
     init {
         backgroundScope.launch(CoroutineName("LocationSimulatorConfigObserver")) {
@@ -90,6 +96,13 @@ class LocationSimulator(
         eventBus.pushEvent(SimulationEvent.Resumed)
     }
 
+    suspend fun seekTo(fraction: Float) = seekMutex.withLock {
+        val points = dataRepository.snapshot()
+        if (points.isEmpty()) return@withLock
+        startIndex = (fraction.coerceIn(0f, 1f) * points.size).toInt().coerceIn(0, points.size - 1)
+        player.restart()
+    }
+
     private fun buildSimulationFlow() = flow {
         val config = configManager.configuration.value
         if (config.loopIndefinitely) {
@@ -116,15 +129,17 @@ class LocationSimulator(
             .onCompletion { onComplete() }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    private fun createSimulationFlow(simulationStartTime: Long) =
-        dataRepository.snapshot()
-            .also { points -> setSize(points.size) }
-            .asFlow()
-            .withIndex()
-            .onEach { (idx, _) -> updateProgress(idx + 1) }
+    private fun createSimulationFlow(simulationStartTime: Long): Flow<Location> {
+        val points = dataRepository.snapshot()
+        setSize(points.size)
+        val from = startIndex.coerceIn(0, points.size)
+        startIndex = 0
+        return points.drop(from).asFlow().withIndex()
+            .onEach { (idx, _) -> updateProgress(from + idx + 1) }
             .onEach { (idx, point) -> delayIfNeeded(idx, point) }
             .mapLatest { (_, point) -> transform(point) }
             .map { it.toLocation(simulationStartTime) }
+    }
 
     private suspend fun delayIfNeeded(
         idx: Int,
