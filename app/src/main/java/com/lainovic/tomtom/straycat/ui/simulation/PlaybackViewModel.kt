@@ -36,6 +36,8 @@ class PlaybackViewModel(
     private val _simulationState = MutableStateFlow(stateRepository.state.value)
     val simulationState: StateFlow<SimulationState> = _simulationState.asStateFlow()
 
+    private var pendingSeek: Float? = null
+
     init {
         logger.d(TAG, "PlaybackViewModel created")
         viewModelScope.launch {
@@ -44,7 +46,16 @@ class PlaybackViewModel(
         viewModelScope.launch {
             eventBus.events.collect { event ->
                 if (event is SimulationEvent.Progress) {
-                    _progress.value = event.progress
+                    val target = pendingSeek
+                    val eps = 1f / dataRepository.size().coerceAtLeast(1)
+                    when {
+                        target == null -> _progress.value = event.progress
+                        kotlin.math.abs(event.progress - target) <= eps -> {
+                            pendingSeek = null
+                            _progress.value = event.progress
+                        }
+                        else -> { /* stale pre-seek event — ignore */ }
+                    }
                 }
             }
         }
@@ -118,6 +129,16 @@ class PlaybackViewModel(
                 dataRepository.clear()
             }
         }
+    }
+
+    fun onScrubStart() { pendingSeek = _progress.value }
+
+    fun onScrub(f: Float) { _progress.value = f }
+
+    fun onScrubEnd(f: Float) {
+        _progress.value = f
+        pendingSeek = f
+        controller.seek(f)
     }
 
     fun pauseResume() {
