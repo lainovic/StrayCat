@@ -9,5 +9,6 @@ interface PlaybackCommands {
     fun start()
     fun pause()
     fun resume()
+    fun seek(fraction: Float)
     fun stop()
 }

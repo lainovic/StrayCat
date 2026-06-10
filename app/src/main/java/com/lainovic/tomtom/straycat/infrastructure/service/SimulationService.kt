@@ -20,6 +20,7 @@ import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class SimulationService : Service() {
     private val locationManager: LocationManager by lazy {
@@ -83,6 +84,15 @@ class SimulationService : Service() {
                     AndroidLogger.d(TAG, "ACTION_RESUME: Resuming simulation")
                     simulator.resume()
                     AndroidLogger.i(TAG, "ACTION_RESUME: Simulation resumed")
+                }
+
+                ACTION_SEEK -> {
+                    AndroidLogger.d(TAG, "ACTION_SEEK: Seeking simulation")
+                    val fraction = intent.getFloatExtra("fraction", 0f)
+                    backgroundScope.launch {
+                        simulator.seekTo(fraction)
+                        AndroidLogger.i(TAG, "ACTION_SEEK: Simulation seeked to $fraction")
+                    }
                 }
 
                 ACTION_STOP -> {
@@ -183,5 +193,6 @@ class SimulationService : Service() {
         const val ACTION_STOP = "com.lainovic.tomtom.straycat.action.STOP"
         const val ACTION_PAUSE = "com.lainovic.tomtom.straycat.action.PAUSE"
         const val ACTION_RESUME = "com.lainovic.tomtom.straycat.action.RESUME"
+        const val ACTION_SEEK = "com.lainovic.tomtom.straycat.action.SEEK"
     }
 }
