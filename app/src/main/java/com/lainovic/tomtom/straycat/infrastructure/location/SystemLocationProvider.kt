@@ -3,6 +3,7 @@ package com.lainovic.tomtom.straycat.infrastructure.location
 import android.Manifest
 import android.location.LocationManager
 import androidx.annotation.RequiresPermission
+import com.lainovic.tomtom.straycat.infrastructure.logging.AndroidLogger
 import com.lainovic.tomtom.straycat.shared.toGeoLocation
 import com.tomtom.sdk.location.GeoLocation
 import com.tomtom.sdk.location.LocationProvider
@@ -49,9 +50,17 @@ class CustomLocationProvider(
         ]
     )
     override fun enable() {
-        locationManager
+        locationJob?.cancel()
+        AndroidLogger.d(
+            TAG,
+            "Enabling provider with minTime=${configuration.minTimeInterval.inWholeMilliseconds}ms, " +
+                "minDistance=${configuration.minDistance.inMeters()}m"
+        )
+
+        locationJob = locationManager
             .observeLocations(configuration = configuration)
             .onEach {
+                AndroidLogger.d(TAG, "Received location update: $it")
                 val geoLocation = it.toGeoLocation()
                 listeners.forEach { listener ->
                     listener.onLocationUpdate(geoLocation)
@@ -71,5 +80,9 @@ class CustomLocationProvider(
     override fun close() {
         disable()
         listeners.clear()
+    }
+
+    companion object {
+        private val TAG = CustomLocationProvider::class.simpleName!!
     }
 }

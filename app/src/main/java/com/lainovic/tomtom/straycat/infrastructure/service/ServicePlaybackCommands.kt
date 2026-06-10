@@ -4,17 +4,17 @@ import android.content.Context
 import android.content.Intent
 import com.lainovic.tomtom.straycat.domain.logging.Logger
 import com.lainovic.tomtom.straycat.domain.simulation.SimulationConfiguration
-import com.lainovic.tomtom.straycat.domain.simulation.SimulationController
+import com.lainovic.tomtom.straycat.domain.simulation.PlaybackCommands
 
 /**
- * Implementation of [SimulationController] that communicates with the [SimulationService]
+ * Implementation of [PlaybackCommands] that communicates with the [SimulationService]
  * via Android Intents.
  */
-class ServiceSimulationController(
+class ServicePlaybackCommands(
     private val context: Context,
     private val serviceClass: Class<*>,
     private val logger: Logger,
-) : SimulationController {
+) : PlaybackCommands {
     override fun start() {
         logger.d(TAG, "start() called")
         sendServiceIntent(SimulationService.ACTION_START)
@@ -45,6 +45,6 @@ class ServiceSimulationController(
     }
 
     companion object {
-        val TAG = ServiceSimulationController::class.simpleName!!
+        val TAG = ServicePlaybackCommands::class.simpleName!!
     }
 }

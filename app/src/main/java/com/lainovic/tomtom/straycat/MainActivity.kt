@@ -22,7 +22,7 @@ class MainActivity : FragmentActivity() {
 
         setContent {
             StrayCatTheme {
-                StrayCatApp(applicationContext)
+                StrayCatApp()
             }
         }
     }

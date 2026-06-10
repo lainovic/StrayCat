@@ -1,10 +1,9 @@
 package com.lainovic.tomtom.straycat.ui.simulation
 
-import android.content.Context
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarData
 import androidx.compose.material3.SnackbarDuration
@@ -12,35 +11,34 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lainovic.tomtom.straycat.domain.logging.Logger
-import com.lainovic.tomtom.straycat.domain.simulation.SimulationConfigurationManager
 import com.lainovic.tomtom.straycat.domain.simulation.SimulationEvent
 import com.lainovic.tomtom.straycat.infrastructure.analytics.InMemorySimulationEventBus
-import com.lainovic.tomtom.straycat.infrastructure.simulation.InMemorySimulationDataRepository
-import com.lainovic.tomtom.straycat.infrastructure.simulation.SimulationStateRepositorySingleton
 import com.lainovic.tomtom.straycat.ui.showToast
 import com.lainovic.tomtom.straycat.ui.theme.AppColors
 import com.lainovic.tomtom.straycat.ui.theme.AppSizes
 import com.tomtom.sdk.location.LocationProvider
 import com.tomtom.sdk.routing.RoutePlanner
+import kotlinx.coroutines.flow.SharedFlow
 
 @Composable
 fun SimulationScreen(
-    context: Context,
     routePlanner: RoutePlanner,
     locationProvider: LocationProvider,
-    configurationManager: SimulationConfigurationManager,
     logger: Logger,
     modifier: Modifier = Modifier
 ) {
-    val viewModel: DashboardViewModel = viewModel(
-        factory = DashboardViewModel.Factory(
+    val viewModel: SimulationScreenViewModel = viewModel(
+        factory = SimulationScreenViewModel.Factory(
             routePlanner,
             InMemorySimulationEventBus,
         )
@@ -49,89 +47,79 @@ fun SimulationScreen(
     val origin by viewModel.origin
     val destination by viewModel.destination
     val points by viewModel.points
-    val errorMessage by viewModel.errorMessage
-
-    val eventBus = InMemorySimulationEventBus
-    val dataRepository = InMemorySimulationDataRepository
-    val stateRepository = SimulationStateRepositorySingleton
+    val isLoading by viewModel.isLoading.collectAsState()
 
     val snackbarHostState = remember { SnackbarHostState() }
 
-    Scaffold(
-        modifier = modifier
-    ) { paddingValues ->
-        Box(modifier = Modifier.padding(paddingValues)) {
-            Dashboard(
-                context = context,
-                origin = origin,
-                destination = destination,
-                points = points,
-                locationProvider = locationProvider,
-                eventBus = eventBus,
-                dataRepository = dataRepository,
-                stateRepository = stateRepository,
-                configurationManager = configurationManager,
-                onOriginSelected = { location, _ ->
-                    viewModel.setOrigin(location)
-                    eventBus.pushEvent(SimulationEvent.OriginSet(location))
-                },
-                onDestinationSelected = { location, _ ->
-                    viewModel.setDestination(location)
-                    eventBus.pushEvent(SimulationEvent.DestinationSet(location))
-                },
-                logger = logger,
-                onMapLongPress = { location ->
-                    when {
-                        origin == null -> {
-                            viewModel.setOrigin(location)
-                            eventBus.pushEvent(SimulationEvent.OriginSet(location))
-                        }
-
-                        destination == null -> {
-                            viewModel.setDestination(location)
-                            eventBus.pushEvent(SimulationEvent.DestinationSet(location))
-                        }
-
-                        else -> {
-                            viewModel.clearRoute()
-                            eventBus.pushEvent(SimulationEvent.RouteCleared)
-                        }
+    Box(modifier = modifier) {
+        SimulationMapContent(
+            originProvider = { origin },
+            destinationProvider = { destination },
+            points = points,
+            locationProvider = locationProvider,
+            logger = logger,
+            onOriginSelected = { location, _ ->
+                viewModel.setOrigin(location)
+                InMemorySimulationEventBus.pushEvent(SimulationEvent.OriginSet(location))
+            },
+            onDestinationSelected = { location, _ ->
+                viewModel.setDestination(location)
+                InMemorySimulationEventBus.pushEvent(SimulationEvent.DestinationSet(location))
+            },
+            onMapLongPress = { location ->
+                when {
+                    origin == null -> {
+                        viewModel.setOrigin(location)
+                        InMemorySimulationEventBus.pushEvent(SimulationEvent.OriginSet(location))
                     }
-                },
-            )
 
-            SnackbarHost(
-                hostState = snackbarHostState,
-                snackbar = { SimulationSnackbar(it) },
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
+                    destination == null -> {
+                        viewModel.setDestination(location)
+                        InMemorySimulationEventBus.pushEvent(SimulationEvent.DestinationSet(location))
+                    }
+
+                    else -> {
+                        viewModel.clearRoute()
+                        InMemorySimulationEventBus.pushEvent(SimulationEvent.RouteCleared)
+                    }
+                }
+            },
+        )
+
+        SnackbarHost(
+            hostState = snackbarHostState,
+            snackbar = { SimulationSnackbar(it) },
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+        )
+
+        if (isLoading) {
+            CircularProgressIndicator(
+                modifier = Modifier.align(Alignment.Center)
             )
         }
     }
 
-    ErrorEffect(errorMessage, context)
-    SnackbarEffect(snackbarHostState, viewModel)
+    ErrorEffect(viewModel.errorMessage)
+    SnackbarEffect(snackbarHostState, viewModel.snackbarMessages)
 }
 
 @Composable
-private fun ErrorEffect(
-    errorMessage: String?,
-    context: Context
-) {
-    LaunchedEffect(errorMessage) {
-        errorMessage?.let {
-            context.showToast("Error: $it")
-        }
+private fun ErrorEffect(errorMessage: State<String?>) {
+    val context = LocalContext.current
+    val message by errorMessage
+    LaunchedEffect(message) {
+        message?.let { context.showToast("Error: $it") }
     }
 }
 
 @Composable
 private fun SnackbarEffect(
     snackbarHostState: SnackbarHostState,
-    viewModel: DashboardViewModel,
+    snackbarMessages: SharedFlow<String>,
 ) {
-    LaunchedEffect(snackbarHostState) {
-        viewModel.snackbarMessages.collect { message ->
+    LaunchedEffect(snackbarMessages) {
+        snackbarMessages.collect { message ->
             snackbarHostState.showSnackbar(
                 message = message,
                 withDismissAction = true,

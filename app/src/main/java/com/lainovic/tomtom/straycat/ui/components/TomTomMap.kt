@@ -21,14 +21,16 @@ import com.tomtom.sdk.map.display.annotation.AlphaInitialCameraOptionsApi
 import com.tomtom.sdk.map.display.marker.Marker
 import com.tomtom.sdk.map.display.polyline.Polyline
 import com.tomtom.sdk.map.display.ui.MapFragment
+import com.skydoves.compose.stability.runtime.TraceRecomposition
 
 @OptIn(AlphaInitialCameraOptionsApi::class)
+@TraceRecomposition(tag = "TomTomMap")
 @Composable
 fun TomTomMap(
-    modifier: Modifier = Modifier,
-    origin: Location? = null,
-    destination: Location? = null,
     locationProvider: LocationProvider,
+    modifier: Modifier = Modifier,
+    originProvider: () -> Location? = { null },
+    destinationProvider: () -> Location? = { null },
     locations: List<Location> = emptyList(),
     onMapLongPress: (Location) -> Unit = { _ -> },
 ) {
@@ -44,6 +46,9 @@ fun TomTomMap(
     var mapFragment by remember { mutableStateOf<MapFragment?>(null) }
 
     val mapOptions = rememberMapOptions()
+
+    val origin = originProvider()
+    val destination = destinationProvider()
 
     mapFragment?.let { fragment ->
         AndroidView(
@@ -114,12 +119,18 @@ fun TomTomMap(
         }
     }
 
-    LaunchedEffect(tomtomMap) {
+    LaunchedEffect(tomtomMap, locationProvider) {
         tomtomMap?.initialize(
             context = context,
             locationProvider = locationProvider,
             onMapLongPress = onMapLongPress,
         )
+    }
+
+    DisposableEffect(locationProvider) {
+        onDispose {
+            locationProvider.close()
+        }
     }
 
     DisposableEffect(lifecycleOwner) {

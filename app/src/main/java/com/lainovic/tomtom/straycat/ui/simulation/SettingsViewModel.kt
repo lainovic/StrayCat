@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.lainovic.tomtom.straycat.domain.simulation.MutableSimulationConfiguration
 import com.lainovic.tomtom.straycat.domain.simulation.SimulationConfiguration
 import com.lainovic.tomtom.straycat.domain.simulation.SimulationConfigurationManager
+import com.lainovic.tomtom.straycat.infrastructure.simulation.AppGraph
 import kotlinx.coroutines.flow.StateFlow
 
 class SettingsViewModel(
@@ -16,12 +17,9 @@ class SettingsViewModel(
         configurationManager.update(block)
     }
 
-    class Factory(
-        private val configurationManager: SimulationConfigurationManager,
-    ) : ViewModelProvider.Factory {
+    class Factory : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return SettingsViewModel(configurationManager) as T
-        }
+        override fun <T : ViewModel> create(modelClass: Class<T>): T =
+            SettingsViewModel(AppGraph.configStore) as T
     }
 }

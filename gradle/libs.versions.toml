@@ -1,5 +1,6 @@
 [versions]
 agp = "8.13.2"
+composeStabilityAnalyzerRuntime = "0.7.0"
 kotlin = "2.2.0"
 coreKtx = "1.10.1"
 junit = "4.13.2"
@@ -14,9 +15,11 @@ androidx-navigation = "2.7.7"
 tomtomSdk = "1.26.4"
 googleSdk = "5.1.1"
 coreSplashscreen = "1.0.1"
+runtime = "1.11.2"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+stability-analyzer-runtime = { group = "com.github.skydoves", name = "compose-stability-runtime", version.ref = "composeStabilityAnalyzerRuntime" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
@@ -44,9 +47,11 @@ tomtom-sdk-maps-api = { group = "com.tomtom.sdk.maps", name = "map-display-api",
 tomtom-sdk-routing = { group = "com.tomtom.sdk.routing", name = "route-planner-online", version.ref = "tomtomSdk" }
 google-places = { group = "com.google.android.libraries.places", name = "places", version.ref = "googleSdk" }
 androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "coreSplashscreen" }
+androidx-compose-runtime = { group = "androidx.compose.runtime", name = "runtime", version.ref = "runtime" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+compose-stability-analyzer = { id = "com.github.skydoves.compose.stability.analyzer", version.ref = "composeStabilityAnalyzerRuntime" }
 

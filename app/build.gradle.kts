@@ -51,7 +51,20 @@ android {
     }
 }
 
+composeCompiler {
+    // Treat the listed external/uncontrolled types as stable.
+    stabilityConfigurationFiles.add(
+        rootProject.layout.projectDirectory.file("app/stability_config.conf")
+    )
+
+    // Emit per-composable stability + recomposition reports to build/compose-*.
+    // Inspect *-composables.txt to see which composables are "skippable/restartable".
+    metricsDestination = layout.buildDirectory.dir("compose-metrics")
+    reportsDestination = layout.buildDirectory.dir("compose-reports")
+}
+
 dependencies {
+    implementation(libs.androidx.compose.runtime)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -74,6 +87,7 @@ dependencies {
     implementation(libs.tomtom.sdk.routing)
     implementation(libs.tomtom.sdk.location.provider)
     implementation(libs.google.places)
+    implementation(libs.stability.analyzer.runtime)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

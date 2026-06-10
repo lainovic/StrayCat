@@ -5,7 +5,7 @@ package com.lainovic.tomtom.straycat.domain.simulation
  * This abstracts away the implementation details (like Android Services or Facades)
  * from the UI and ViewModel layers.
  */
-interface SimulationController {
+interface PlaybackCommands {
     fun start()
     fun pause()
     fun resume()

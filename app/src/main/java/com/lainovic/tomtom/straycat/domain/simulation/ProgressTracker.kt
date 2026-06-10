@@ -11,7 +11,7 @@ interface ProgressTracker {
     fun setSize(size: Int)
 }
 
-class SimpleProgressTracker(
+class EventBusProgressTracker(
     private val eventBus: SimulationEventBus,
     private val logger: Logger,
 ) : ProgressTracker {
@@ -26,7 +26,7 @@ class SimpleProgressTracker(
         logger.d(TAG, "updateProgress() called with: $current/$size")
 
         _progress.value = current.toFloat() / size
-        eventBus.pushEvent(SimulationEvent.SimulationProgress(_progress.value))
+        eventBus.pushEvent(SimulationEvent.Progress(_progress.value))
     }
 
     override fun resetProgress() {
@@ -38,6 +38,6 @@ class SimpleProgressTracker(
     }
 
     companion object {
-        private val TAG = SimpleProgressTracker::class.simpleName!!
+        private val TAG = EventBusProgressTracker::class.simpleName!!
     }
 }

@@ -1,10 +1,10 @@
 package com.lainovic.tomtom.straycat.infrastructure.shared
 
 import android.location.Location
-import com.lainovic.tomtom.straycat.domain.location.SimulationPoint
+import com.lainovic.tomtom.straycat.domain.location.TrackPoint
 import com.lainovic.tomtom.straycat.shared.calculateSpeedBetweenPoints
 import com.lainovic.tomtom.straycat.shared.toGeoPoint
-import com.lainovic.tomtom.straycat.shared.toSimulationPoint
+import com.lainovic.tomtom.straycat.shared.toTrackPoint
 import com.tomtom.sdk.location.Place
 import com.tomtom.sdk.routing.RoutePlanner
 import com.tomtom.sdk.routing.RoutePlanningCallback
@@ -21,7 +21,7 @@ import kotlin.coroutines.resumeWithException
 suspend fun RoutePlanner.planRoute(
     origin: Location,
     destination: Location,
-): List<SimulationPoint> = suspendCancellableCoroutine { cont ->
+): List<TrackPoint> = suspendCancellableCoroutine { cont ->
     val job = planRoute(
         routePlanningOptions = RoutePlanningOptions(
             itinerary = Itinerary(
@@ -46,7 +46,7 @@ suspend fun RoutePlanner.planRoute(
 
             override fun onSuccess(result: RoutePlanningResponse) {
                 val route = result.routes.first()
-                cont.resume(route.toSimulationPoints())
+                cont.resume(route.toTrackPoints())
             }
         },
     )
@@ -54,12 +54,12 @@ suspend fun RoutePlanner.planRoute(
     cont.invokeOnCancellation { job.cancel() }
 }
 
-private fun Route.toSimulationPoints(): List<SimulationPoint> {
+private fun Route.toTrackPoints(): List<TrackPoint> {
     val speeds = calculateSegmentSpeeds()
     val baseOffset = routePoints.first().travelTime
 
     return routePoints.mapIndexed { index, point ->
-        point.toSimulationPoint(
+        point.toTrackPoint(
             elapsedTravelTime = point.travelTime - baseOffset,
             speed = speeds[index],
         )

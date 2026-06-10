@@ -1,19 +1,21 @@
 package com.lainovic.tomtom.straycat.domain.simulation
 
 import android.location.Location
-import com.lainovic.tomtom.straycat.domain.location.SimulationPoint
+import com.lainovic.tomtom.straycat.domain.location.TrackPoint
 import com.lainovic.tomtom.straycat.domain.logging.Logger
 import com.lainovic.tomtom.straycat.infrastructure.analytics.InMemorySimulationEventBus
-import com.lainovic.tomtom.straycat.infrastructure.simulation.InMemorySimulationDataRepository
+import com.lainovic.tomtom.straycat.infrastructure.simulation.InMemoryRouteTrackStore
 import com.lainovic.tomtom.straycat.shared.toLocation
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onCompletion
@@ -21,36 +23,37 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.withIndex
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.supervisorScope
 
 class LocationSimulator(
     configuration: SimulationConfiguration = SimulationConfiguration(),
-    private val onTick: suspend (Location) -> Unit,
+    private val onLocation: suspend (Location) -> Unit,
     private val onComplete: () -> Unit = {},
     private val onError: (Throwable) -> Unit = {},
     private val backgroundScope: CoroutineScope,
     private val logger: Logger,
     private val configManager: SimulationConfigurationManager =
-        SimpleSimulationConfigurationManager(configuration),
-    private val delayCalculator: SimpleDelayCalculator = SimpleDelayCalculator(
+        InMemoryConfigurationStore(configuration),
+    private val delayCalculator: RealisticDelayCalculator = RealisticDelayCalculator(
         configManager.configuration,
     ),
-    private val simulationPointProcessor: SimulationPointProcessor = SimpleSimulationPointProcessor(
+    private val simulationPointProcessor: PointTransform = PointTransformPipeline(
         configuration = configManager.configuration,
         backgroundScope = backgroundScope,
     ),
-    private val dataRepository: SimulationDataRepository = InMemorySimulationDataRepository,
+    private val dataRepository: RouteTrackStore = InMemoryRouteTrackStore,
     private val eventBus: SimulationEventBus = InMemorySimulationEventBus,
-    private val pauseController: PauseController = SimplePauseController(eventBus, logger),
-    private val progressTracker: ProgressTracker = SimpleProgressTracker(eventBus, logger),
+    private val progressTracker: ProgressTracker = EventBusProgressTracker(eventBus, logger),
 ) :
     SimulationConfigurationManager by configManager,
-    SimulationPointProcessor by simulationPointProcessor,
-    PauseController by pauseController,
+    PointTransform by simulationPointProcessor,
     ProgressTracker by progressTracker,
     DelayCalculator by delayCalculator {
 
-    private var collectionJob: Job? = null
+    private val player = FlowPlayer(
+        flowFactory = ::buildSimulationFlow,
+        onLocation = onLocation,
+        backgroundScope = backgroundScope,
+    )
 
     init {
         backgroundScope.launch(CoroutineName("LocationSimulatorConfigObserver")) {
@@ -63,52 +66,54 @@ class LocationSimulator(
     }
 
     fun start() {
-        logger.d(TAG, "start() called, collectionJob=${collectionJob}")
-        if (collectionJob?.isActive == true) {
-            logger.d(TAG, "Collection job already active, returning")
-            return
-        }
-
-        resetPause()
-        collectionJob = backgroundScope.launch {
-            logger.d(TAG, "Simulation coroutine started")
-            val simulationStartTime = System.currentTimeMillis()
-            runSimulation(simulationStartTime)
-        }
-
-        eventBus.pushEvent(SimulationEvent.SimulationStarted)
-
+        logger.d(TAG, "start() called")
+        player.start()
+        eventBus.pushEvent(SimulationEvent.Started)
         logger.i(TAG, "start() completed")
-        logger.d(TAG, "collectionJob=$collectionJob")
     }
 
-    private suspend fun runSimulation(simulationStartTime: Long) = supervisorScope {
-        val config = this@LocationSimulator.configuration.value
+    fun stop() {
+        logger.d(TAG, "stop() called")
+        player.stop()
+        eventBus.pushEvent(SimulationEvent.Stopped)
+    }
 
+    fun pause() {
+        player.pause()
+        logger.i(TAG, "Paused")
+        eventBus.pushEvent(SimulationEvent.Paused)
+    }
+
+    fun resume() {
+        player.resume()
+        logger.i(TAG, "Resumed")
+        eventBus.pushEvent(SimulationEvent.Resumed)
+    }
+
+    private fun buildSimulationFlow() = flow {
+        val config = configManager.configuration.value
         if (config.loopIndefinitely) {
-            while (isActive) {
+            while (currentCoroutineContext().isActive) {
                 resetProgress()
-                runSimulationOnce(simulationStartTime)
+                emitAll(simulationFlowOnce())
             }
         } else {
             resetProgress()
-            runSimulationOnce(simulationStartTime)
+            emitAll(simulationFlowOnce())
         }
     }
 
-    private suspend fun runSimulationOnce(simulationStartTime: Long) = supervisorScope {
-        createSimulationFlow(simulationStartTime)
+    private fun simulationFlowOnce() =
+        createSimulationFlow(System.currentTimeMillis())
             .catch { cause ->
                 eventBus.pushEvent(
-                    SimulationEvent.SimulationError(
+                    SimulationEvent.Error(
                         cause.message ?: "Unknown error occurred during simulation",
                     )
                 )
                 onError(cause)
             }
             .onCompletion { onComplete() }
-            .collect { onTick(it) }
-    }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun createSimulationFlow(simulationStartTime: Long) =
@@ -117,28 +122,18 @@ class LocationSimulator(
             .asFlow()
             .withIndex()
             .onEach { (idx, _) -> updateProgress(idx + 1) }
-            .onEach { waitIfPaused() }
             .onEach { (idx, point) -> delayIfNeeded(idx, point) }
-            .mapLatest { (_, point) -> process(point) }
+            .mapLatest { (_, point) -> transform(point) }
             .map { it.toLocation(simulationStartTime) }
 
     private suspend fun delayIfNeeded(
         idx: Int,
-        point: SimulationPoint,
+        point: TrackPoint,
     ) {
         val delayMs = calculateDelay(idx, point)
         delay(delayMs)
     }
 
-    fun stop() {
-        logger.d(TAG, "stop() called, collectionJob=$collectionJob")
-        collectionJob?.cancel()
-        collectionJob = null
-        resetPause()
-        resetProgress()
-
-        eventBus.pushEvent(SimulationEvent.SimulationStopped)
-    }
 
     companion object {
         private val TAG = LocationSimulator::class.simpleName!!

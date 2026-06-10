@@ -8,6 +8,7 @@ import com.lainovic.tomtom.straycat.BuildConfig
 import com.lainovic.tomtom.straycat.domain.shared.toGpsConfiguration
 import com.lainovic.tomtom.straycat.domain.simulation.SimulationConfiguration
 import com.lainovic.tomtom.straycat.infrastructure.location.CustomLocationProvider
+import com.lainovic.tomtom.straycat.infrastructure.logging.AndroidLogger
 import com.tomtom.sdk.location.LocationProvider
 import com.tomtom.sdk.map.display.MapOptions
 import com.tomtom.sdk.routing.online.OnlineRoutePlanner
@@ -16,10 +17,17 @@ import com.tomtom.sdk.routing.online.OnlineRoutePlanner
 fun rememberCustomLocationProvider(
     context: Context,
     configuration: SimulationConfiguration,
-): LocationProvider = remember {
+): LocationProvider = remember(context, configuration) {
+    val gpsConfiguration = configuration.toGpsConfiguration()
+    AndroidLogger.d(
+        "Init",
+        "Creating CustomLocationProvider minTime=${gpsConfiguration.minTimeInterval.inWholeMilliseconds}ms, " +
+            "minDistance=${gpsConfiguration.minDistance.inMeters()}m"
+    )
+
     CustomLocationProvider(
         locationManager = context.getLocationManager(),
-        configuration = configuration.toGpsConfiguration(),
+        configuration = gpsConfiguration,
     )
 }
 

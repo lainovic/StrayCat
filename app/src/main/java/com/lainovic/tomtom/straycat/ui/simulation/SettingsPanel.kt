@@ -15,19 +15,25 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.milliseconds
 
+import com.lainovic.tomtom.straycat.domain.simulation.MutableSimulationConfiguration
+import com.lainovic.tomtom.straycat.domain.simulation.SimulationConfiguration
+import kotlinx.coroutines.flow.StateFlow
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsPanel(
-    viewModel: SettingsViewModel,
+    configuration: StateFlow<SimulationConfiguration>,
+    onUpdateConfiguration: (MutableSimulationConfiguration.() -> Unit) -> Unit,
     onDismiss: () -> Unit
 ) {
-    val config by viewModel.configuration.collectAsState()
+    val config by configuration.collectAsState()
     val sheetState = rememberModalBottomSheetState()
 
     ModalBottomSheet(
@@ -50,7 +56,7 @@ fun SettingsPanel(
                 label = "Realistic Timing",
                 checked = config.useRealisticTiming,
                 onCheckedChange = { value ->
-                    viewModel.updateConfiguration { useRealisticTiming = value }
+                    onUpdateConfiguration { useRealisticTiming = value }
                 }
             )
 
@@ -60,7 +66,7 @@ fun SettingsPanel(
                     value = config.delayBetweenEmissions.inWholeMilliseconds.toFloat(),
                     valueRange = 100f..5000f,
                     onValueChange = { value ->
-                        viewModel.updateConfiguration {
+                        onUpdateConfiguration {
                             delayBetweenEmissions = value.toLong().milliseconds
                         }
                     }
@@ -71,7 +77,7 @@ fun SettingsPanel(
                 label = "Loop Indefinitely",
                 checked = config.loopIndefinitely,
                 onCheckedChange = { value ->
-                    viewModel.updateConfiguration { loopIndefinitely = value }
+                    onUpdateConfiguration { loopIndefinitely = value }
                 }
             )
 
@@ -80,7 +86,7 @@ fun SettingsPanel(
                 value = config.speedMultiplier,
                 valueRange = 0.1f..10f,
                 onValueChange = { value ->
-                    viewModel.updateConfiguration { speedMultiplier = value }
+                    onUpdateConfiguration { speedMultiplier = value }
                 }
             )
 
@@ -89,7 +95,7 @@ fun SettingsPanel(
                 value = config.noiseLevelInMeters,
                 valueRange = 0f..50f,
                 onValueChange = { value ->
-                    viewModel.updateConfiguration { noiseLevelInMeters = value }
+                    onUpdateConfiguration { noiseLevelInMeters = value }
                 }
             )
         }

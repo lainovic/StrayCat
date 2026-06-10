@@ -1,49 +1,42 @@
 package com.lainovic.tomtom.straycat.ui.simulation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import com.lainovic.tomtom.straycat.domain.location.SimulationPoint
+import com.lainovic.tomtom.straycat.domain.simulation.SimulationState
 import com.lainovic.tomtom.straycat.ui.components.PlayButton
 import com.lainovic.tomtom.straycat.ui.components.PlaybackControls
-import com.lainovic.tomtom.straycat.ui.showToast
 import com.lainovic.tomtom.straycat.ui.theme.AppSizes
+import kotlinx.coroutines.flow.StateFlow
 
 @Composable
-fun PlaybackControls(
-    viewModel: PlaybackViewModel,
-    simulationPoints: List<SimulationPoint>,
+fun PlaybackControlsSwitcher(
+    simulationState: StateFlow<SimulationState>,
+    progress: StateFlow<Float>,
+    onPlay: () -> Unit,
+    onPauseOrResume: () -> Unit,
+    onStop: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val context = LocalContext.current
-    var isRunning by remember { mutableStateOf(false) }
+    val state by simulationState.collectAsState()
+    val progressValue by progress.collectAsState()
 
-    val onPlayClick = {
-        if (simulationPoints.isNotEmpty()) {
-            viewModel.startPlaying(simulationPoints)
-            isRunning = true
-        } else {
-            context.showToast(
-                "Please set both origin and destination to start."
-            )
-        }
-    }
+    val isRunning = state is SimulationState.Running || state is SimulationState.Paused
 
     if (isRunning) {
         PlaybackControls(
-            viewModel = viewModel,
-            onStop = { isRunning = false },
-            modifier = modifier
+            progress = progressValue,
+            simulationState = state,
+            onPauseOrResume = onPauseOrResume,
+            onStop = onStop,
+            modifier = modifier,
         )
     } else {
         PlayButton(
-            onClick = onPlayClick,
+            onClick = onPlay,
             iconSize = AppSizes.ButtonSize,
-            modifier = modifier
+            modifier = modifier,
         )
     }
 }

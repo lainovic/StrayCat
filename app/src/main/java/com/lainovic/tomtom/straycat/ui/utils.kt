@@ -8,25 +8,25 @@ import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.lainovic.tomtom.straycat.domain.simulation.SimulationState
-import com.lainovic.tomtom.straycat.ui.components.PlayResumeButtonState
+import com.lainovic.tomtom.straycat.ui.components.PlayPauseButtonState
 
 fun Context.showToast(message: String) {
     Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
 }
 
-fun SimulationState.toPlayResumeButtonState(): PlayResumeButtonState =
+fun SimulationState.toPlayPauseButtonState(): PlayPauseButtonState =
     when (this) {
-        is SimulationState.Idle -> PlayResumeButtonState.Play
-        is SimulationState.Running -> PlayResumeButtonState.Pause
-        is SimulationState.Paused -> PlayResumeButtonState.Play
-        is SimulationState.Stopped -> PlayResumeButtonState.Play
-        is SimulationState.Error -> PlayResumeButtonState.Play
+        is SimulationState.Idle -> PlayPauseButtonState.Play
+        is SimulationState.Running -> PlayPauseButtonState.Pause
+        is SimulationState.Paused -> PlayPauseButtonState.Play
+        is SimulationState.Stopped -> PlayPauseButtonState.Play
+        is SimulationState.Error -> PlayPauseButtonState.Play
     }
 
-fun PlayResumeButtonState.toIconAndText(): Pair<ImageVector, String> =
+fun PlayPauseButtonState.toIconAndText(): Pair<ImageVector, String> =
     when (this) {
-        is PlayResumeButtonState.Play -> Icons.Filled.PlayArrow to "Play"
-        is PlayResumeButtonState.Pause -> Icons.Filled.Pause to "Pause"
+        is PlayPauseButtonState.Play -> Icons.Filled.PlayArrow to "Play"
+        is PlayPauseButtonState.Pause -> Icons.Filled.Pause to "Pause"
     }
 
 fun Location.prettyPrint() =

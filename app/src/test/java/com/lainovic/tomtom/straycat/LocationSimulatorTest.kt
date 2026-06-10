@@ -1,6 +1,6 @@
 package com.lainovic.tomtom.straycat
 
-import com.lainovic.tomtom.straycat.domain.simulation.LocationSimulator
+import com.lainovic.tomtom.straycat.domain.simulation.FlowPlayer
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flow
@@ -11,7 +11,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class LocationSimulatorTest {
+class FlowPlayerTest {
 
     @Test
     fun `pause suspends emission and resume continues from same point`() = runTest {
@@ -24,9 +24,9 @@ class LocationSimulatorTest {
             }
         }
 
-        val tested = LocationSimulator(
-            locationFlow = testFlow,
-            onTick = { ticks.add(it) },
+        val tested = FlowPlayer(
+            flowFactory = { testFlow },
+            onLocation = { ticks.add(it) },
             backgroundScope = backgroundScope,
         )
 
@@ -74,9 +74,9 @@ class LocationSimulatorTest {
             }
         }
 
-        val tested = LocationSimulator(
-            locationFlow = testFlow,
-            onTick = { ticks.add(it) },
+        val tested = FlowPlayer(
+            flowFactory = { testFlow },
+            onLocation = { ticks.add(it) },
             backgroundScope = backgroundScope,
         )
 
@@ -109,9 +109,9 @@ class LocationSimulatorTest {
             }
         }
 
-        val tested = LocationSimulator(
-            locationFlow = testFlow,
-            onTick = {},
+        val tested = FlowPlayer(
+            flowFactory = { testFlow },
+            onLocation = {},
             backgroundScope = backgroundScope,
         )
 
@@ -126,9 +126,9 @@ class LocationSimulatorTest {
 
     @Test
     fun `stop when not started is safe`() = runTest {
-        val tested = LocationSimulator(
-            locationFlow = flow { emit(1) },
-            onTick = {},
+        val tested = FlowPlayer(
+            flowFactory = { flow { emit(1) } },
+            onLocation = {},
             backgroundScope = backgroundScope,
         )
 
@@ -148,9 +148,9 @@ class LocationSimulatorTest {
             }
         }
 
-        val tested = LocationSimulator(
-            locationFlow = testFlow,
-            onTick = { ticks.add(it) },
+        val tested = FlowPlayer(
+            flowFactory = { testFlow },
+            onLocation = { ticks.add(it) },
             backgroundScope = backgroundScope,
         )
 
@@ -184,9 +184,9 @@ class LocationSimulatorTest {
             }
         }
 
-        val tested = LocationSimulator(
-            locationFlow = testFlow,
-            onTick = {},
+        val tested = FlowPlayer(
+            flowFactory = { testFlow },
+            onLocation = {},
             backgroundScope = backgroundScope,
         )
 
@@ -229,9 +229,9 @@ class LocationSimulatorTest {
             }
         }
 
-        val tested = LocationSimulator(
-            locationFlow = testFlow,
-            onTick = {
+        val tested = FlowPlayer(
+            flowFactory = { testFlow },
+            onLocation = {
                 println("Collected tick $it at time ${currentTime}")
                 ticks.add(it)
             },

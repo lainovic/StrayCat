@@ -11,7 +11,7 @@ interface SimulationConfigurationManager {
     fun update(block: MutableSimulationConfiguration.() -> Unit)
 }
 
-class SimpleSimulationConfigurationManager(
+class InMemoryConfigurationStore(
     initialConfiguration: SimulationConfiguration = SimulationConfiguration()
 ) : SimulationConfigurationManager {
     private val _configuration = MutableStateFlow(initialConfiguration)

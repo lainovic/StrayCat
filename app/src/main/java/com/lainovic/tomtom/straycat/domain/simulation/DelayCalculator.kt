@@ -1,18 +1,18 @@
 package com.lainovic.tomtom.straycat.domain.simulation
 
-import com.lainovic.tomtom.straycat.domain.location.SimulationPoint
+import com.lainovic.tomtom.straycat.domain.location.TrackPoint
 import kotlinx.coroutines.flow.StateFlow
 
 interface DelayCalculator {
-    fun calculateDelay(idx: Int, point: SimulationPoint): Long
+    fun calculateDelay(idx: Int, point: TrackPoint): Long
 }
 
-class SimpleDelayCalculator(
+class RealisticDelayCalculator(
     val configuration: StateFlow<SimulationConfiguration>
 ) : DelayCalculator {
     private var previousElapsedTime = 0L
 
-    override fun calculateDelay(idx: Int, point: SimulationPoint): Long {
+    override fun calculateDelay(idx: Int, point: TrackPoint): Long {
         val delay = when {
             !configuration.value.useRealisticTiming -> // fixed delay
                 configuration.value.delayBetweenEmissions.inWholeMilliseconds

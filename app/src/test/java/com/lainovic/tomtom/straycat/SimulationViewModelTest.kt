@@ -2,8 +2,13 @@ package com.lainovic.tomtom.straycat
 
 import android.app.Application
 import androidx.test.core.app.ApplicationProvider
-import com.lainovic.tomtom.straycat.infrastructure.service.SimulationService
+import com.lainovic.tomtom.straycat.domain.logging.Logger
 import com.lainovic.tomtom.straycat.domain.simulation.SimulationState
+import com.lainovic.tomtom.straycat.infrastructure.analytics.InMemorySimulationEventBus
+import com.lainovic.tomtom.straycat.infrastructure.service.ServiceSimulationController
+import com.lainovic.tomtom.straycat.infrastructure.service.SimulationService
+import com.lainovic.tomtom.straycat.infrastructure.simulation.InMemoryRouteTrackStore
+import com.lainovic.tomtom.straycat.infrastructure.simulation.AppGraph
 import com.lainovic.tomtom.straycat.ui.simulation.PlaybackViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
@@ -14,6 +19,13 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
+
+private val noOpLogger = object : Logger {
+    override fun d(tag: String, message: String) = Unit
+    override fun i(tag: String, message: String) = Unit
+    override fun w(tag: String, message: String, throwable: Throwable?) = Unit
+    override fun e(tag: String, message: String, throwable: Throwable?) = Unit
+}
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
@@ -26,7 +38,18 @@ class SimulationViewModelTest {
     @Before
     fun setup() {
         application = ApplicationProvider.getApplicationContext()
-        viewModel = PlaybackViewModel(application)
+        val controller = ServiceSimulationController(
+            context = application,
+            serviceClass = SimulationService::class.java,
+            logger = noOpLogger,
+        )
+        viewModel = PlaybackViewModel(
+            controller = controller,
+            logger = noOpLogger,
+            dataRepository = InMemoryRouteTrackStore,
+            stateRepository = AppGraph.stateStore,
+            eventBus = InMemorySimulationEventBus,
+        )
     }
 
     @Test
@@ -75,7 +98,7 @@ class SimulationViewModelTest {
     fun `startStopSimulation from Paused stops simulation and transitions to Stopped`() = runTest {
         // Given: Paused state
         viewModel.startStop() // Start
-        viewModel.pauseOrResume() // Pause
+        viewModel.pauseResume() // Pause
         assertEquals(SimulationState.Paused, viewModel.simulationState.value)
         shadowOf(application).clearStartedServices()
 
@@ -119,7 +142,7 @@ class SimulationViewModelTest {
         shadowOf(application).clearStartedServices()
 
         // When: pauseResumeSimulation is called
-        viewModel.pauseOrResume()
+        viewModel.pauseResume()
 
         // Then: State transitions to Paused
         assertEquals(SimulationState.Paused, viewModel.simulationState.value)
@@ -134,12 +157,12 @@ class SimulationViewModelTest {
     fun `pauseResumeSimulation from Paused resumes simulation and transitions to Running`() = runTest {
         // Given: Paused state
         viewModel.startStop() // Start
-        viewModel.pauseOrResume() // Pause
+        viewModel.pauseResume() // Pause
         assertEquals(SimulationState.Paused, viewModel.simulationState.value)
         shadowOf(application).clearStartedServices()
 
         // When: pauseResumeSimulation is called again
-        viewModel.pauseOrResume()
+        viewModel.pauseResume()
 
         // Then: State transitions to Running
         assertEquals(SimulationState.Running, viewModel.simulationState.value)
@@ -156,7 +179,7 @@ class SimulationViewModelTest {
         assertEquals(SimulationState.Idle, viewModel.simulationState.value)
 
         // When: pauseResumeSimulation is called
-        viewModel.pauseOrResume()
+        viewModel.pauseResume()
 
         // Then: State remains Idle
         assertEquals(SimulationState.Idle, viewModel.simulationState.value)
@@ -176,7 +199,7 @@ class SimulationViewModelTest {
         shadowOf(application).clearStartedServices()
 
         // When: pauseResumeSimulation is called
-        viewModel.pauseOrResume()
+        viewModel.pauseResume()
 
         // Then: State remains Stopped
         assertEquals(SimulationState.Stopped, viewModel.simulationState.value)
@@ -194,11 +217,11 @@ class SimulationViewModelTest {
         assertEquals(SimulationState.Running, viewModel.simulationState.value)
 
         // Pause
-        viewModel.pauseOrResume()
+        viewModel.pauseResume()
         assertEquals(SimulationState.Paused, viewModel.simulationState.value)
 
         // Resume
-        viewModel.pauseOrResume()
+        viewModel.pauseResume()
         assertEquals(SimulationState.Running, viewModel.simulationState.value)
 
         // Stop
@@ -225,4 +248,3 @@ class SimulationViewModelTest {
         assertEquals(SimulationState.Running, viewModel.simulationState.value)
     }
 }
-

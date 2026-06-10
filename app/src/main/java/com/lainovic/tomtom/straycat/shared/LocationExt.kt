@@ -3,14 +3,14 @@ package com.lainovic.tomtom.straycat.shared
 import android.location.Location
 import android.location.LocationManager
 import android.os.SystemClock
-import com.lainovic.tomtom.straycat.domain.location.SimulationPoint
+import com.lainovic.tomtom.straycat.domain.location.TrackPoint
 import com.tomtom.quantity.Angle
 import com.tomtom.quantity.Distance
 import com.tomtom.sdk.common.valueOr
 import com.tomtom.sdk.location.GeoLocation
 import com.tomtom.sdk.location.GeoPoint
 import com.tomtom.sdk.routing.route.Route
-import com.tomtom.sdk.routing.route.RoutePoint
+import com.tomtom.sdk.routing.route.RoutePoint as SdkRoutePoint
 import kotlin.time.Duration
 
 fun Location.toGeoPoint(): GeoPoint = GeoPoint(
@@ -39,17 +39,17 @@ fun List<Location>.toGeoPoints(): List<GeoPoint> = map { it.toGeoPoint() }
 fun List<GeoPoint>.toMapLocations(provider: String = "gps"): List<Location> =
     map { it.toLocation(provider) }
 
-fun RoutePoint.toLocation(
+fun SdkRoutePoint.toLocation(
     provider: String = LocationManager.GPS_PROVIDER,
 ): Location = Location(provider).apply {
     latitude = coordinate.latitude
     longitude = coordinate.longitude
 }
 
-fun RoutePoint.toSimulationPoint(
+fun SdkRoutePoint.toTrackPoint(
     elapsedTravelTime: Duration? = null,
     speed: Double? = null
-) = SimulationPoint(
+) = TrackPoint(
     location = toLocation(),
     elapsedTravelTime = elapsedTravelTime,
     speed = speed,
@@ -71,9 +71,9 @@ fun Route.calculateSpeedBetweenPoints(
     return if (timeDelta > 0) distance / timeDelta else null
 }
 
-fun List<SimulationPoint>.toMapLocations() = map { it.location }
+fun List<TrackPoint>.toMapLocations() = map { it.location }
 
-fun SimulationPoint.toLocation(simulationStartTime: Long) =
+fun TrackPoint.toLocation(simulationStartTime: Long) =
     Location(LocationManager.GPS_PROVIDER).apply {
         latitude = location.latitude
         longitude = location.longitude

@@ -3,19 +3,19 @@ package com.lainovic.tomtom.straycat.domain.simulation
 import android.location.Location
 
 sealed class SimulationEvent {
-    object SimulationInitialized : SimulationEvent()
+    object Initialized : SimulationEvent()
 
-    object SimulationStarted : SimulationEvent()
-    object SimulationPaused : SimulationEvent()
-    object SimulationResumed : SimulationEvent()
-    object SimulationStopped : SimulationEvent()
+    object Started : SimulationEvent()
+    object Paused : SimulationEvent()
+    object Resumed : SimulationEvent()
+    object Stopped : SimulationEvent()
 
-    data class SimulationProgress(val progress: Float) : SimulationEvent()
+    data class Progress(val progress: Float) : SimulationEvent()
 
     data class OriginSet(val location: Location) : SimulationEvent()
     data class DestinationSet(val location: Location) : SimulationEvent()
 
-    data class SimulationError(val message: String) : SimulationEvent()
+    data class Error(val message: String) : SimulationEvent()
 
     data object RoutePlanned : SimulationEvent()
     data object RouteCleared : SimulationEvent()

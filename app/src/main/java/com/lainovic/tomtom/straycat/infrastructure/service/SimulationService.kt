@@ -12,11 +12,10 @@ import android.os.Build
 import android.os.IBinder
 import com.lainovic.tomtom.straycat.R
 import com.lainovic.tomtom.straycat.domain.simulation.LocationSimulator
-import com.lainovic.tomtom.straycat.domain.simulation.SimulationConfiguration
 import com.lainovic.tomtom.straycat.infrastructure.location.MockLocationProvider
 import com.lainovic.tomtom.straycat.infrastructure.logging.AndroidLogger
 import com.lainovic.tomtom.straycat.infrastructure.shared.getLocationManager
-import com.lainovic.tomtom.straycat.infrastructure.simulation.SimulationConfigurationManagerSingleton
+import com.lainovic.tomtom.straycat.infrastructure.simulation.AppGraph
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -112,21 +111,21 @@ class SimulationService : Service() {
         }
 
         return LocationSimulator(
-            onTick = this::onTick,
+            onLocation = this::onLocation,
             onComplete = { AndroidLogger.i(TAG, "Simulation completed") },
             backgroundScope = CoroutineScope(
                 backgroundScope.coroutineContext + handler
             ),
-            configManager = SimulationConfigurationManagerSingleton,
+            configManager = AppGraph.configStore,
             logger = AndroidLogger,
         ).also {
             AndroidLogger.d(TAG, "LocationSimulator created successfully")
         }
     }
 
-    private fun onTick(location: Location) {
+    private fun onLocation(location: Location) {
         try {
-            AndroidLogger.d(TAG, "onTick() called with tick: $location")
+            AndroidLogger.d(TAG, "onLocation() called with tick: $location")
             locationManager.setTestProviderLocation(LocationManager.GPS_PROVIDER, location)
         } catch (e: SecurityException) {
             AndroidLogger.e(TAG, "Failed to set mock location", e)
