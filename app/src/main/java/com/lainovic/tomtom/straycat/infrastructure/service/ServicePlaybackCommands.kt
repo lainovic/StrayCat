@@ -31,13 +31,10 @@ class ServicePlaybackCommands(
     }
 
     override fun seek(fraction: Float) {
-        logger.d(TAG, "seek() called with fraction=$fraction")
-        logger.d(TAG, "sendServiceIntent: action=${SimulationService.ACTION_SEEK}")
-        val intent = Intent(context, serviceClass)
-            .apply {
-                setAction(SimulationService.ACTION_SEEK)
-                putExtra("fraction", fraction)
-            }
+        val intent = Intent(context, serviceClass).apply {
+            action = SimulationService.ACTION_SEEK
+            putExtra(SimulationService.EXTRA_SEEK_FRACTION, fraction)
+        }
         context.startForegroundService(intent)
     }
 

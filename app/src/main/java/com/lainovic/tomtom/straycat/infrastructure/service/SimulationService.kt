@@ -87,12 +87,8 @@ class SimulationService : Service() {
                 }
 
                 ACTION_SEEK -> {
-                    AndroidLogger.d(TAG, "ACTION_SEEK: Seeking simulation")
-                    val fraction = intent.getFloatExtra("fraction", 0f)
-                    backgroundScope.launch {
-                        simulator.seekTo(fraction)
-                        AndroidLogger.i(TAG, "ACTION_SEEK: Simulation seeked to $fraction")
-                    }
+                    val f = intent.getFloatExtra(EXTRA_SEEK_FRACTION, 0f)
+                    backgroundScope.launch { simulator.seekTo(f) }
                 }
 
                 ACTION_STOP -> {
@@ -194,5 +190,6 @@ class SimulationService : Service() {
         const val ACTION_PAUSE = "com.lainovic.tomtom.straycat.action.PAUSE"
         const val ACTION_RESUME = "com.lainovic.tomtom.straycat.action.RESUME"
         const val ACTION_SEEK = "com.lainovic.tomtom.straycat.action.SEEK"
+        const val EXTRA_SEEK_FRACTION = "seek_fraction"
     }
 }
