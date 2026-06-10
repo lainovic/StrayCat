@@ -15,13 +15,13 @@ import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.withIndex
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -58,6 +58,7 @@ class LocationSimulator(
         backgroundScope = backgroundScope,
     )
 
+    @Volatile
     private var startIndex = 0
     private val seekMutex = Mutex()
 
@@ -132,7 +133,7 @@ class LocationSimulator(
     private fun createSimulationFlow(simulationStartTime: Long): Flow<Location> {
         val points = dataRepository.snapshot()
         setSize(points.size)
-        val from = startIndex.coerceIn(0, points.size)
+        val from = startIndex.coerceIn(0, maxOf(0, points.size - 1))
         startIndex = 0
         return points.drop(from).asFlow().withIndex()
             .onEach { (idx, _) -> updateProgress(from + idx + 1) }
