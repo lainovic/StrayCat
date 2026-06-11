@@ -25,14 +25,15 @@ fun PlaybackControlsSwitcher(
     val state by simulationState.collectAsState()
     val progressValue by progress.collectAsState()
 
-    val isRunning = state is SimulationState.Running || state is SimulationState.Paused
+    val showControls = state !is SimulationState.Idle
 
-    if (isRunning) {
+    if (showControls) {
         PlaybackControls(
             progress = progressValue,
             simulationState = state,
             onPauseOrResume = onPauseOrResume,
             onStop = onStop,
+            onReplay = onPlay,
             onScrubStart = onScrubStart,
             onScrub = onScrub,
             onScrubEnd = onScrubEnd,

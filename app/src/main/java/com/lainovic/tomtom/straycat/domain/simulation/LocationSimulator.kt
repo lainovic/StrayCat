@@ -8,7 +8,6 @@ import com.lainovic.tomtom.straycat.infrastructure.simulation.InMemoryRouteTrack
 import com.lainovic.tomtom.straycat.shared.toLocation
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.asFlow
@@ -115,7 +114,7 @@ class LocationSimulator(
             resetProgress()
             emitAll(simulationFlowOnce())
         }
-    }
+    }.onCompletion { cause -> if (cause == null) onComplete() }
 
     private fun simulationFlowOnce() =
         createSimulationFlow(System.currentTimeMillis())
@@ -127,9 +126,7 @@ class LocationSimulator(
                 )
                 onError(cause)
             }
-            .onCompletion { onComplete() }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     private fun createSimulationFlow(simulationStartTime: Long): Flow<Location> {
         val points = dataRepository.snapshot()
         setSize(points.size)
@@ -138,7 +135,7 @@ class LocationSimulator(
         return points.drop(from).asFlow().withIndex()
             .onEach { (idx, _) -> updateProgress(from + idx + 1) }
             .onEach { (idx, point) -> delayIfNeeded(idx, point) }
-            .mapLatest { (_, point) -> transform(point) }
+            .map { (_, point) -> transform(point) }
             .map { it.toLocation(simulationStartTime) }
     }
 

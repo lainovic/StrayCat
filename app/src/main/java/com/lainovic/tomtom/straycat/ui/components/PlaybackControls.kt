@@ -10,10 +10,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Replay
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
@@ -45,6 +47,7 @@ fun PlaybackControls(
     simulationState: SimulationState,
     onPauseOrResume: () -> Unit,
     onStop: () -> Unit,
+    onReplay: () -> Unit,
     onScrubStart: () -> Unit,
     onScrub: (Float) -> Unit,
     onScrubEnd: (Float) -> Unit,
@@ -77,6 +80,7 @@ fun PlaybackControls(
                 color = AppColors.Primary,
                 trackColor = AppColors.ProgressTrack.copy(alpha = 0f),
                 strokeCap = StrokeCap.Butt,
+                drawStopIndicator = {},
                 modifier = Modifier.fillMaxSize()
             )
 
@@ -85,58 +89,73 @@ fun PlaybackControls(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxSize()
             ) {
-                val isPauseResumeEnabled = simulationState is SimulationState.Running ||
-                        simulationState is SimulationState.Paused
+                val isStopped = simulationState is SimulationState.Stopped
 
-                val pauseResumeButtonColor by animateColorAsState(
-                    targetValue = if (isPauseResumeEnabled) Color.Transparent else AppColors.PrimaryDisabled,
-                    animationSpec = tween(300),
-                    label = "pauseResumeColor"
-                )
+                if (!isStopped) {
+                    val isPauseResumeEnabled = simulationState is SimulationState.Running ||
+                            simulationState is SimulationState.Paused
 
-                val pauseResumeContentColor by animateColorAsState(
-                    targetValue = if (isPauseResumeEnabled) MaterialTheme.colorScheme.primary else AppColors.OnDisabled,
-                    animationSpec = tween(300),
-                    label = "pauseResumeContentColor"
-                )
+                    val pauseResumeButtonColor by animateColorAsState(
+                        targetValue = if (isPauseResumeEnabled) Color.Transparent else AppColors.PrimaryDisabled,
+                        animationSpec = tween(300),
+                        label = "pauseResumeColor"
+                    )
 
-                FilledIconButton(
-                    onClick = onPauseOrResume,
-                    enabled = isPauseResumeEnabled,
-                    colors = IconButtonDefaults.filledIconButtonColors(
-                        containerColor = pauseResumeButtonColor,
-                        contentColor = pauseResumeContentColor,
-                        disabledContainerColor = AppColors.PrimaryDisabled,
-                        disabledContentColor = AppColors.OnDisabled
-                    ),
-                    modifier = Modifier.size(AppSizes.ButtonSize)
-                ) {
-                    val (icon, text) = simulationState.toPlayPauseButtonState().toIconAndText()
-                    Icon(imageVector = icon, contentDescription = text, modifier = Modifier.size(AppSizes.IconSize))
+                    val pauseResumeContentColor by animateColorAsState(
+                        targetValue = if (isPauseResumeEnabled) MaterialTheme.colorScheme.primary else AppColors.OnDisabled,
+                        animationSpec = tween(300),
+                        label = "pauseResumeContentColor"
+                    )
+
+                    FilledIconButton(
+                        onClick = onPauseOrResume,
+                        enabled = isPauseResumeEnabled,
+                        colors = IconButtonDefaults.filledIconButtonColors(
+                            containerColor = pauseResumeButtonColor,
+                            contentColor = pauseResumeContentColor,
+                            disabledContainerColor = AppColors.PrimaryDisabled,
+                            disabledContentColor = AppColors.OnDisabled
+                        ),
+                        modifier = Modifier.size(AppSizes.ButtonSize)
+                    ) {
+                        val (icon, text) = simulationState.toPlayPauseButtonState().toIconAndText()
+                        Icon(imageVector = icon, contentDescription = text, modifier = Modifier.size(AppSizes.IconSize))
+                    }
                 }
-
                 val isStopEnabled = simulationState is SimulationState.Running ||
                         simulationState is SimulationState.Paused
 
+                val stopReplayContentColor by animateColorAsState(
+                    targetValue = if (isStopped) MaterialTheme.colorScheme.primary else AppColors.Error,
+                    animationSpec = tween(300),
+                    label = "stopReplayContentColor"
+                )
+
                 FilledIconButton(
-                    onClick = onStop,
-                    enabled = isStopEnabled,
+                    onClick = if (isStopped) onReplay else onStop,
+                    enabled = isStopped || isStopEnabled,
                     colors = IconButtonDefaults.filledIconButtonColors(
                         containerColor = Color.Transparent,
-                        contentColor = AppColors.Error,
+                        contentColor = stopReplayContentColor,
                         disabledContainerColor = AppColors.PrimaryDisabled,
                         disabledContentColor = AppColors.OnDisabled
                     ),
                     modifier = Modifier.size(AppSizes.ButtonSize)
                 ) {
-                    Icon(imageVector = Icons.Filled.Stop, contentDescription = "Stop", modifier = Modifier.size(AppSizes.IconSize))
+                    if (isStopped) {
+                        Icon(imageVector = Icons.Filled.Replay, contentDescription = "Replay", modifier = Modifier.size(AppSizes.IconSize))
+                    } else {
+                        Icon(imageVector = Icons.Filled.Stop, contentDescription = "Stop", modifier = Modifier.size(AppSizes.IconSize))
+                    }
                 }
             }
 
             if (seekEnabled && widthPx > 0) {
+                val buttonsEndPadding = AppSizes.ButtonSize * 2 + AppSizes.ButtonSpacing
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
+                        .padding(end = buttonsEndPadding)
                         .pointerInput(Unit) {
                             detectTapGestures { offset ->
                                 val f = (offset.x / widthPx).coerceIn(0f, 1f)

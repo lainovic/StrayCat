@@ -12,6 +12,8 @@ import android.os.Build
 import android.os.IBinder
 import com.lainovic.tomtom.straycat.R
 import com.lainovic.tomtom.straycat.domain.simulation.LocationSimulator
+import com.lainovic.tomtom.straycat.domain.simulation.SimulationEvent
+import com.lainovic.tomtom.straycat.infrastructure.analytics.InMemorySimulationEventBus
 import com.lainovic.tomtom.straycat.infrastructure.location.MockLocationProvider
 import com.lainovic.tomtom.straycat.infrastructure.logging.AndroidLogger
 import com.lainovic.tomtom.straycat.infrastructure.shared.getLocationManager
@@ -118,7 +120,10 @@ class SimulationService : Service() {
 
         return LocationSimulator(
             onLocation = this::onLocation,
-            onComplete = { AndroidLogger.i(TAG, "Simulation completed") },
+            onComplete = {
+                AndroidLogger.i(TAG, "Simulation completed")
+                InMemorySimulationEventBus.pushEvent(SimulationEvent.Stopped)
+            },
             backgroundScope = CoroutineScope(
                 backgroundScope.coroutineContext + handler
             ),
