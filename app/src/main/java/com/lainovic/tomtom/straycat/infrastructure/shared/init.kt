@@ -17,7 +17,7 @@ import com.tomtom.sdk.routing.online.OnlineRoutePlanner
 fun rememberCustomLocationProvider(
     context: Context,
     configuration: SimulationConfiguration,
-): LocationProvider = remember(context, configuration) {
+): LocationProvider = remember(context, configuration.delayBetweenEmissions, configuration.distanceBetweenEmissions) {
     val gpsConfiguration = configuration.toGpsConfiguration()
     AndroidLogger.d(
         "Init",
