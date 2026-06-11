@@ -1,5 +1,11 @@
 import java.util.Properties
 
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.inputStream().use { localProperties.load(it) }
+}
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -16,12 +22,6 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
-
-        val localProperties = Properties()
-        val localPropertiesFile = rootProject.file("local.properties")
-        if (localPropertiesFile.exists()) {
-            localPropertiesFile.inputStream().use { localProperties.load(it) }
-        }
 
         val tomtomApiKey = localProperties.getProperty("tomtomApiKey") ?: ""
         buildConfigField("String", "TOMTOM_API_KEY", "\"${tomtomApiKey}\"")
@@ -99,4 +99,30 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+}
+
+tasks.register("validateApiKeys") {
+    doFirst {
+        val missing = buildList {
+            if (localProperties.getProperty("tomtomApiKey").isNullOrBlank()) add("tomtomApiKey")
+            if (localProperties.getProperty("googlePlacesApiKey").isNullOrBlank()) add("googlePlacesApiKey")
+        }
+        if (missing.isNotEmpty()) {
+            throw GradleException(
+                """
+                |
+                |Missing required API keys in local.properties: ${missing.joinToString(", ")}
+                |
+                |Add the following to local.properties in the project root:
+                |  tomtomApiKey=YOUR_TOMTOM_API_KEY
+                |  googlePlacesApiKey=YOUR_GOOGLE_PLACES_API_KEY
+                |
+                """.trimMargin()
+            )
+        }
+    }
+}
+
+tasks.named("preBuild") {
+    dependsOn("validateApiKeys")
 }
