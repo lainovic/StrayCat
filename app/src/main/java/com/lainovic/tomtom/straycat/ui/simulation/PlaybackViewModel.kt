@@ -45,17 +45,21 @@ class PlaybackViewModel(
         }
         viewModelScope.launch {
             eventBus.events.collect { event ->
-                if (event is SimulationEvent.Progress) {
-                    val target = pendingSeek
-                    val eps = 1f / dataRepository.size().coerceAtLeast(1)
-                    when {
-                        target == null -> _progress.value = event.progress
-                        kotlin.math.abs(event.progress - target) <= eps -> {
-                            pendingSeek = null
-                            _progress.value = event.progress
+                when (event) {
+                    is SimulationEvent.Progress -> {
+                        val target = pendingSeek
+                        val eps = 1f / dataRepository.size().coerceAtLeast(1)
+                        when {
+                            target == null -> _progress.value = event.progress
+                            kotlin.math.abs(event.progress - target) <= eps -> {
+                                pendingSeek = null
+                                _progress.value = event.progress
+                            }
+                            else -> { /* stale pre-seek event — ignore */ }
                         }
-                        else -> { /* stale pre-seek event — ignore */ }
                     }
+                    is SimulationEvent.RouteCleared -> _progress.value = 0f
+                    else -> {}
                 }
             }
         }

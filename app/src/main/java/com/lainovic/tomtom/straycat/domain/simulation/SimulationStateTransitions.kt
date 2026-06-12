@@ -16,6 +16,7 @@ object SimulationStateTransitions {
                 is SimulationEvent.Paused -> SimulationState.Paused
                 is SimulationEvent.Stopped -> SimulationState.Stopped
                 is SimulationEvent.Error -> SimulationState.Error(event.message)
+                is SimulationEvent.RouteCleared -> SimulationState.Idle
                 else -> currentState
             }
 
@@ -23,17 +24,20 @@ object SimulationStateTransitions {
                 is SimulationEvent.Resumed -> SimulationState.Running
                 is SimulationEvent.Stopped -> SimulationState.Stopped
                 is SimulationEvent.Error -> SimulationState.Error(event.message)
+                is SimulationEvent.RouteCleared -> SimulationState.Idle
                 else -> currentState
             }
 
             is SimulationState.Stopped -> when (event) {
                 is SimulationEvent.Started -> SimulationState.Running
                 is SimulationEvent.Error -> SimulationState.Error(event.message)
+                is SimulationEvent.RouteCleared -> SimulationState.Idle
                 else -> currentState
             }
 
             is SimulationState.Error -> when (event) {
                 is SimulationEvent.Started -> SimulationState.Running
+                is SimulationEvent.RouteCleared -> SimulationState.Idle
                 else -> currentState
             }
         }

@@ -21,8 +21,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.android.libraries.places.api.Places
 import com.lainovic.tomtom.straycat.domain.location.TrackPoint
 import com.lainovic.tomtom.straycat.domain.logging.Logger
-import com.lainovic.tomtom.straycat.infrastructure.service.ServicePlaybackCommands
-import com.lainovic.tomtom.straycat.infrastructure.service.SimulationService
 import com.lainovic.tomtom.straycat.shared.toMapLocations
 import com.lainovic.tomtom.straycat.ui.components.SearchButton
 import com.lainovic.tomtom.straycat.ui.components.SettingsButton
@@ -38,24 +36,13 @@ fun SimulationMapContent(
     points: List<TrackPoint>,
     locationProvider: LocationProvider,
     logger: Logger,
+    playbackViewModel: PlaybackViewModel,
     onOriginSelected: (Location, String) -> Unit,
     onDestinationSelected: (Location, String) -> Unit,
     onMapLongPress: (Location) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-
-    val controller = remember(context) {
-        ServicePlaybackCommands(
-            context = context,
-            serviceClass = SimulationService::class.java,
-            logger = logger,
-        )
-    }
-
-    val playbackViewModel: PlaybackViewModel = viewModel(
-        factory = PlaybackViewModel.Factory(controller, logger)
-    )
     val settingsViewModel: SettingsViewModel = viewModel(
         factory = SettingsViewModel.Factory()
     )

@@ -22,7 +22,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lainovic.tomtom.straycat.domain.logging.Logger
 import com.lainovic.tomtom.straycat.domain.simulation.SimulationEvent
+import com.lainovic.tomtom.straycat.domain.simulation.SimulationState
 import com.lainovic.tomtom.straycat.infrastructure.analytics.InMemorySimulationEventBus
+import com.lainovic.tomtom.straycat.infrastructure.service.ServicePlaybackCommands
+import com.lainovic.tomtom.straycat.infrastructure.service.SimulationService
 import com.lainovic.tomtom.straycat.ui.showToast
 import com.lainovic.tomtom.straycat.ui.theme.AppColors
 import com.lainovic.tomtom.straycat.ui.theme.AppSizes
@@ -37,11 +40,24 @@ fun SimulationScreen(
     logger: Logger,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+
     val viewModel: SimulationScreenViewModel = viewModel(
         factory = SimulationScreenViewModel.Factory(
             routePlanner,
             InMemorySimulationEventBus,
         )
+    )
+
+    val controller = remember(context) {
+        ServicePlaybackCommands(
+            context = context,
+            serviceClass = SimulationService::class.java,
+            logger = logger,
+        )
+    }
+    val playbackViewModel: PlaybackViewModel = viewModel(
+        factory = PlaybackViewModel.Factory(controller, logger)
     )
 
     val origin by viewModel.origin
@@ -58,6 +74,7 @@ fun SimulationScreen(
             points = points,
             locationProvider = locationProvider,
             logger = logger,
+            playbackViewModel = playbackViewModel,
             onOriginSelected = { location, _ ->
                 viewModel.setOrigin(location)
                 InMemorySimulationEventBus.pushEvent(SimulationEvent.OriginSet(location))
@@ -79,6 +96,10 @@ fun SimulationScreen(
                     }
 
                     else -> {
+                        val state = playbackViewModel.simulationState.value
+                        if (state is SimulationState.Running || state is SimulationState.Paused) {
+                            playbackViewModel.stopPlaying()
+                        }
                         viewModel.clearRoute()
                         InMemorySimulationEventBus.pushEvent(SimulationEvent.RouteCleared)
                     }
