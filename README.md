@@ -27,16 +27,22 @@ Perfect for testing location-based features and route simulations.
 
 ### Features
 
-- 🎮 **Full Playback Control** - Start, pause, resume, and stop
+- 🎮 **Full Playback Control** - Start, pause, resume, stop, and replay
+- ⏩ **Touch Seeking** - Tap or scrub the progress bar to jump to any position in the simulation
 - 📍 **Route Simulation** - Replay predefined routes with realistic timing using TomTom Routing SDK
-- ⚙️ **Configurable** (TODO) - Speed multiplier, interpolation, noise injection, looping, and more
+- ⚙️ **Configurable** - Speed multiplier, interpolation, noise injection, looping, and more
 - 🔄 **Map display** - via TomTom Maps SDK
 - 🔍 **Search Locations** - Find points of interest using Google Places Search SDK
 
+#### Playback Controls
+- **Play / Pause / Resume** - Full playback lifecycle control
+- **Stop** - End the simulation; transitions to a Replay button
+- **Replay** - Restart the simulation from the beginning after it ends (naturally or manually)
+- **Seek** - Tap anywhere on the progress bar to jump to that position; drag to scrub in real time
+
 #### Simulation Configuration
 - **Speed Multiplier** - Control playback speed (0.1x - 10x)
-or
-- **Delay** - Add a delay between location updates (in seconds)
+- **Delay** - Add a fixed delay between location updates (in seconds)
 - **Loop Mode** - Continuously replay the simulation
 - **Realistic Timing** - Use actual route timing vs fixed intervals
 - **Noise Level** - Add GPS signal variance (in meters)
@@ -46,6 +52,15 @@ or
 ### Prerequisites
 - Android device or emulator with API 26+
 - Location permissions enabled
+
+### Prerequisites
+- Android Studio Hedgehog or newer
+- `local.properties` in the project root with the following keys:
+  ```
+  tomtomApiKey=YOUR_TOMTOM_API_KEY
+  googlePlacesApiKey=YOUR_GOOGLE_PLACES_API_KEY
+  ```
+  The build will fail with a clear error message if either key is missing.
 
 ### Permissions
 
@@ -59,10 +74,12 @@ Permissions are requested at runtime on first launch.
 
 ### Basic Controls
 
-1. **Start** - Begin location tracking or simulation
+1. **Start** - Begin simulation; tap the play button after setting a route
 2. **Pause** - Temporarily suspend updates (state preserved)
 3. **Resume** - Continue from where you paused
-4. **Stop** - End current session
+4. **Stop** - End current session; the button transitions to Replay
+5. **Replay** - Restart the simulation from the beginning
+6. **Seek** - Tap or drag the progress bar to jump to any point in the simulation
 
 To begin simulation, long-press on the map to set origin and destination points, which will generate a route.
 
@@ -76,16 +93,17 @@ To clear and start over, long-press on the map again after a route has been gene
 - ✅ Pause/resume functionality
 - ✅ Speed control and looping
 - ✅ Error handling and recovery
-- ✅ Start with documentation
 - ✅ Speed multiplier UI
 - ✅ Loop mode toggle
 - ✅ Realistic timing option
 - ✅ GPS noise injection
+- ✅ Touch-seekable progress bar (tap or scrub to any position)
+- ✅ Replay button after simulation ends
+- ✅ Build-time and runtime API key validation
 
 ### TODO
 
 - 🚧 More elaborate testing strategy
-- 🚧 Enhanced UI controls
 - 🚧 Comprehensive documentation
 
 ## License
