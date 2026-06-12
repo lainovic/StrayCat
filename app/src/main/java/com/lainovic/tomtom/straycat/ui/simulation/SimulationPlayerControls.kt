@@ -17,19 +17,26 @@ fun PlaybackControlsSwitcher(
     onPlay: () -> Unit,
     onPauseOrResume: () -> Unit,
     onStop: () -> Unit,
+    onScrubStart: () -> Unit,
+    onScrub: (Float) -> Unit,
+    onScrubEnd: (Float) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val state by simulationState.collectAsState()
     val progressValue by progress.collectAsState()
 
-    val isRunning = state is SimulationState.Running || state is SimulationState.Paused
+    val showControls = state !is SimulationState.Idle
 
-    if (isRunning) {
+    if (showControls) {
         PlaybackControls(
             progress = progressValue,
             simulationState = state,
             onPauseOrResume = onPauseOrResume,
             onStop = onStop,
+            onReplay = onPlay,
+            onScrubStart = onScrubStart,
+            onScrub = onScrub,
+            onScrubEnd = onScrubEnd,
             modifier = modifier,
         )
     } else {

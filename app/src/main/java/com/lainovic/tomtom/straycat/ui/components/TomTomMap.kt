@@ -65,39 +65,19 @@ fun TomTomMap(
         }
     }
 
-    LaunchedEffect(tomtomMap, origin) {
+    LaunchedEffect(tomtomMap, origin, destination) {
         val map = tomtomMap ?: return@LaunchedEffect
-        val origin = origin ?: run {
-            originMarker?.remove()
-            originMarker = null
-            return@LaunchedEffect
-        }
 
         originMarker?.remove()
-        originMarker = map.addMarker(origin)
-
-        destination?.let { destination ->
-            map.animateToBounds(listOf(origin, destination))
-        } ?: run {
-            map.animateToLocation(origin)
-        }
-    }
-
-    LaunchedEffect(tomtomMap, destination) {
-        val map = tomtomMap ?: return@LaunchedEffect
-        val destination = destination ?: run {
-            destinationMarker?.remove()
-            destinationMarker = null
-            return@LaunchedEffect
-        }
+        originMarker = origin?.let { map.addMarker(it) }
 
         destinationMarker?.remove()
-        destinationMarker = map.addMarker(destination)
+        destinationMarker = destination?.let { map.addMarker(it) }
 
-        origin?.let { origin ->
-            map.animateToBounds(listOf(origin, destination))
-        } ?: run {
-            map.animateToLocation(destination)
+        when {
+            origin != null && destination != null -> map.animateToBounds(listOf(origin, destination))
+            origin != null -> map.animateToLocation(origin)
+            destination != null -> map.animateToLocation(destination)
         }
     }
 

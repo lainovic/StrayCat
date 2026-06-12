@@ -12,6 +12,8 @@ import android.os.Build
 import android.os.IBinder
 import com.lainovic.tomtom.straycat.R
 import com.lainovic.tomtom.straycat.domain.simulation.LocationSimulator
+import com.lainovic.tomtom.straycat.domain.simulation.SimulationEvent
+import com.lainovic.tomtom.straycat.infrastructure.analytics.InMemorySimulationEventBus
 import com.lainovic.tomtom.straycat.infrastructure.location.MockLocationProvider
 import com.lainovic.tomtom.straycat.infrastructure.logging.AndroidLogger
 import com.lainovic.tomtom.straycat.infrastructure.shared.getLocationManager
@@ -20,6 +22,7 @@ import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class SimulationService : Service() {
     private val locationManager: LocationManager by lazy {
@@ -85,6 +88,11 @@ class SimulationService : Service() {
                     AndroidLogger.i(TAG, "ACTION_RESUME: Simulation resumed")
                 }
 
+                ACTION_SEEK -> {
+                    val f = intent.getFloatExtra(EXTRA_SEEK_FRACTION, 0f)
+                    backgroundScope.launch { simulator.seekTo(f) }
+                }
+
                 ACTION_STOP -> {
                     AndroidLogger.d(TAG, "ACTION_STOP: Stopping simulation")
                     simulator.stop()
@@ -112,7 +120,10 @@ class SimulationService : Service() {
 
         return LocationSimulator(
             onLocation = this::onLocation,
-            onComplete = { AndroidLogger.i(TAG, "Simulation completed") },
+            onComplete = {
+                AndroidLogger.i(TAG, "Simulation completed")
+                InMemorySimulationEventBus.pushEvent(SimulationEvent.Stopped)
+            },
             backgroundScope = CoroutineScope(
                 backgroundScope.coroutineContext + handler
             ),
@@ -183,5 +194,7 @@ class SimulationService : Service() {
         const val ACTION_STOP = "com.lainovic.tomtom.straycat.action.STOP"
         const val ACTION_PAUSE = "com.lainovic.tomtom.straycat.action.PAUSE"
         const val ACTION_RESUME = "com.lainovic.tomtom.straycat.action.RESUME"
+        const val ACTION_SEEK = "com.lainovic.tomtom.straycat.action.SEEK"
+        const val EXTRA_SEEK_FRACTION = "seek_fraction"
     }
 }

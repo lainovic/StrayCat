@@ -30,6 +30,14 @@ class ServicePlaybackCommands(
         sendServiceIntent(SimulationService.ACTION_RESUME)
     }
 
+    override fun seek(fraction: Float) {
+        val intent = Intent(context, serviceClass).apply {
+            action = SimulationService.ACTION_SEEK
+            putExtra(SimulationService.EXTRA_SEEK_FRACTION, fraction)
+        }
+        context.startForegroundService(intent)
+    }
+
     override fun stop() {
         logger.d(TAG, "stop() called")
         sendServiceIntent(SimulationService.ACTION_STOP)

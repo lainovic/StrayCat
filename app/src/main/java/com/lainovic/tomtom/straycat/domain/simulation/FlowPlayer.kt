@@ -2,6 +2,7 @@ package com.lainovic.tomtom.straycat.domain.simulation
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
@@ -46,6 +47,17 @@ class FlowPlayer<T>(
 
     fun resume() {
         isPaused.value = false
+    }
+
+    suspend fun restart() {
+        collectionJob?.cancelAndJoin()
+        collectionJob = null
+        isPaused.value = false
+        collectionJob = backgroundScope.launch {
+            flowFactory()
+                .onEach { waitIfPaused() }
+                .collect { onLocation(it) }
+        }
     }
 
     private suspend fun waitIfPaused() {

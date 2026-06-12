@@ -8,13 +8,13 @@ import com.lainovic.tomtom.straycat.infrastructure.simulation.InMemoryRouteTrack
 import com.lainovic.tomtom.straycat.shared.toLocation
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
@@ -23,6 +23,8 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.withIndex
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 class LocationSimulator(
     configuration: SimulationConfiguration = SimulationConfiguration(),
@@ -54,6 +56,10 @@ class LocationSimulator(
         onLocation = onLocation,
         backgroundScope = backgroundScope,
     )
+
+    @Volatile
+    private var startIndex = 0
+    private val seekMutex = Mutex()
 
     init {
         backgroundScope.launch(CoroutineName("LocationSimulatorConfigObserver")) {
@@ -90,6 +96,13 @@ class LocationSimulator(
         eventBus.pushEvent(SimulationEvent.Resumed)
     }
 
+    suspend fun seekTo(fraction: Float) = seekMutex.withLock {
+        val points = dataRepository.snapshot()
+        if (points.isEmpty()) return@withLock
+        startIndex = (fraction.coerceIn(0f, 1f) * points.size).toInt().coerceIn(0, points.size - 1)
+        player.restart()
+    }
+
     private fun buildSimulationFlow() = flow {
         val config = configManager.configuration.value
         if (config.loopIndefinitely) {
@@ -101,7 +114,7 @@ class LocationSimulator(
             resetProgress()
             emitAll(simulationFlowOnce())
         }
-    }
+    }.onCompletion { cause -> if (cause == null) onComplete() }
 
     private fun simulationFlowOnce() =
         createSimulationFlow(System.currentTimeMillis())
@@ -113,18 +126,18 @@ class LocationSimulator(
                 )
                 onError(cause)
             }
-            .onCompletion { onComplete() }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    private fun createSimulationFlow(simulationStartTime: Long) =
-        dataRepository.snapshot()
-            .also { points -> setSize(points.size) }
-            .asFlow()
-            .withIndex()
-            .onEach { (idx, _) -> updateProgress(idx + 1) }
+    private fun createSimulationFlow(simulationStartTime: Long): Flow<Location> {
+        val points = dataRepository.snapshot()
+        setSize(points.size)
+        val from = startIndex.coerceIn(0, maxOf(0, points.size - 1))
+        startIndex = 0
+        return points.drop(from).asFlow().withIndex()
+            .onEach { (idx, _) -> updateProgress(from + idx + 1) }
             .onEach { (idx, point) -> delayIfNeeded(idx, point) }
-            .mapLatest { (_, point) -> transform(point) }
+            .map { (_, point) -> transform(point) }
             .map { it.toLocation(simulationStartTime) }
+    }
 
     private suspend fun delayIfNeeded(
         idx: Int,
