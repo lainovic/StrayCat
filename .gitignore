@@ -20,3 +20,11 @@ build/
 !gradle-wrapper.jar
 .gradletasknamecache
 gradle-app.setting
+
+# Teaching / learning workspace (local only)
+MISSION.md
+RESOURCES.md
+NOTES.md
+lessons/
+learning-records/
+reference/
